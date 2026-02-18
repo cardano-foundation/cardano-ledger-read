@@ -2,13 +2,14 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
--- |
--- Module      : Cardano.Read.Ledger.Tx.Hash
--- Copyright   : © 2024 Cardano Foundation
--- License     : Apache-2.0
---
--- Transaction hash extraction as raw bytes. This provides the hash
--- digest for a transaction across all eras.
+{- |
+Module      : Cardano.Read.Ledger.Tx.Hash
+Copyright   : © 2024 Cardano Foundation
+License     : Apache-2.0
+
+Transaction hash extraction as raw bytes. This provides the hash
+digest for a transaction across all eras.
+-}
 module Cardano.Read.Ledger.Tx.Hash
     ( -- * Hash extraction
       getEraTxHash

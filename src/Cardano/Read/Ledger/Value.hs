@@ -37,12 +37,13 @@ import Cardano.Read.Ledger.Eras
     Value
 ------------------------------------------------------------------------------}
 
--- |
--- Era-specific value type.
---
--- * Byron: 'Lovelace' (ADA only)
--- * Shelley\/Allegra: 'Coin' (ADA only)
--- * Mary and later: 'MaryValue' (ADA + native tokens)
+{- |
+Era-specific value type.
+
+* Byron: 'Lovelace' (ADA only)
+* Shelley\/Allegra: 'Coin' (ADA only)
+* Mary and later: 'MaryValue' (ADA + native tokens)
+-}
 type family ValueType era where
     ValueType Byron = BY.Lovelace
     ValueType Shelley = SH.Coin

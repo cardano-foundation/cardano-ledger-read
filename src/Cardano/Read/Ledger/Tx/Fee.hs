@@ -47,11 +47,12 @@ import Control.Lens
     ( (^.)
     )
 
--- |
--- Era-specific fee type.
---
--- Byron returns unit @()@ as fees are implicit. Shelley and later
--- return 'Coin' (lovelace amount).
+{- |
+Era-specific fee type.
+
+Byron returns unit @()@ as fees are implicit. Shelley and later
+return 'Coin' (lovelace amount).
+-}
 type family FeeType era where
     FeeType Byron = ()
     FeeType Shelley = Coin

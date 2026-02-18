@@ -60,15 +60,16 @@ import Data.Sequence.Strict
     ( StrictSeq
     )
 
--- |
--- Era-specific output collection type.
---
--- The output type evolves across eras to support new features:
---
--- * Byron\/Shelley\/Allegra: Simple address + coin
--- * Mary: Multi-asset values
--- * Alonzo: Datum hashes
--- * Babbage\/Conway: Inline datums and reference scripts
+{- |
+Era-specific output collection type.
+
+The output type evolves across eras to support new features:
+
+* Byron\/Shelley\/Allegra: Simple address + coin
+* Mary: Multi-asset values
+* Alonzo: Datum hashes
+* Babbage\/Conway: Inline datums and reference scripts
+-}
 type family OutputsType era where
     OutputsType Byron = NonEmpty BY.TxOut
     OutputsType Shelley = StrictSeq (ShelleyTxOut Shelley)

@@ -50,11 +50,12 @@ import Data.Set
     ( Set
     )
 
--- |
--- Era-specific extra signers type.
---
--- Pre-Alonzo eras return unit @()@ as extra signers are not supported.
--- Alonzo and later return a set of key hashes that must sign the transaction.
+{- |
+Era-specific extra signers type.
+
+Pre-Alonzo eras return unit @()@ as extra signers are not supported.
+Alonzo and later return a set of key hashes that must sign the transaction.
+-}
 type family ExtraSigsType era where
     ExtraSigsType Byron = ()
     ExtraSigsType Shelley = ()

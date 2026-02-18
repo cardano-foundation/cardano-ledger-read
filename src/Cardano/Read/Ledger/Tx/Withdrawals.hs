@@ -56,11 +56,12 @@ import Data.Map
     ( Map
     )
 
--- |
--- Era-specific withdrawal type.
---
--- Byron does not support staking, so withdrawals return unit @()@.
--- Shelley and later return a map from reward accounts to coin amounts.
+{- |
+Era-specific withdrawal type.
+
+Byron does not support staking, so withdrawals return unit @()@.
+Shelley and later return a map from reward accounts to coin amounts.
+-}
 type family WithdrawalsType era where
     WithdrawalsType Byron = ()
     WithdrawalsType Shelley = RewardWithdrawals

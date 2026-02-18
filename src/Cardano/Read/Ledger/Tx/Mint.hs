@@ -48,11 +48,12 @@ import Control.Lens
     ( view
     )
 
--- |
--- Era-specific minting type.
---
--- Pre-Mary eras return unit @()@ as native tokens are not supported.
--- Mary and later return 'MultiAsset' representing minted\/burned tokens.
+{- |
+Era-specific minting type.
+
+Pre-Mary eras return unit @()@ as native tokens are not supported.
+Mary and later return 'MultiAsset' representing minted\/burned tokens.
+-}
 type family MintType era where
     MintType Byron = ()
     MintType Shelley = ()

@@ -50,11 +50,12 @@ import Data.Set
     ( Set
     )
 
--- |
--- Era-specific reference inputs type.
---
--- Pre-Babbage eras return unit @()@ as reference inputs are not supported.
--- Babbage and later return a set of inputs read without being consumed.
+{- |
+Era-specific reference inputs type.
+
+Pre-Babbage eras return unit @()@ as reference inputs are not supported.
+Babbage and later return a set of inputs read without being consumed.
+-}
 type family ReferenceInputsType era where
     ReferenceInputsType Byron = ()
     ReferenceInputsType Shelley = ()

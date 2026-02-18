@@ -48,14 +48,15 @@ import Control.Lens
     ( view
     )
 
--- |
--- Era-specific witness type.
---
--- Witness types differ across eras:
---
--- * Byron: Unit @()@ (witnesses are inline in the transaction)
--- * Shelley through Mary: 'ShelleyTxWits' (key and script witnesses)
--- * Alonzo and later: 'AlonzoTxWits' (adds Plutus scripts and redeemers)
+{- |
+Era-specific witness type.
+
+Witness types differ across eras:
+
+* Byron: Unit @()@ (witnesses are inline in the transaction)
+* Shelley through Mary: 'ShelleyTxWits' (key and script witnesses)
+* Alonzo and later: 'AlonzoTxWits' (adds Plutus scripts and redeemers)
+-}
 type family WitnessesType era where
     WitnessesType Byron = ()
     WitnessesType Shelley = ShelleyTxWits Shelley

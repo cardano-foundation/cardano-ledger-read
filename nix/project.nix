@@ -6,8 +6,7 @@ let
     packages.cardano-crypto-praos.components.library.pkgconfig =
       lib.mkForce [ [ pkgs.libsodium-vrf ] ];
     packages.cardano-crypto-class.components.library.pkgconfig =
-      lib.mkForce
-        [ [ pkgs.libsodium-vrf pkgs.secp256k1 pkgs.libblst ] ];
+      lib.mkForce [[ pkgs.libsodium-vrf pkgs.secp256k1 pkgs.libblst ]];
   };
   shell = { pkgs, ... }: {
     tools = {
@@ -52,13 +51,10 @@ let
     modules = [
       fix-libs
       {
-        packages.cardano-ledger-read.ghcOptions =
-          [ "-Wno-deriving-typeable" ];
+        packages.cardano-ledger-read.ghcOptions = [ "-Wno-deriving-typeable" ];
       }
     ];
-    inputMap = {
-      "https://chap.intersectmbo.org/" = CHaP;
-    };
+    inputMap = { "https://chap.intersectmbo.org/" = CHaP; };
   };
 
   project = pkgs.haskell-nix.cabalProject' mkProject;
@@ -74,8 +70,7 @@ let
     buildInputs = [ pkgs.nixfmt-classic pkgs.just ];
   };
 
-in
-{
+in {
   devShells = {
     default = project.shellFor shell;
     quality = project.shellFor quality-shell;
