@@ -11,7 +11,8 @@ format:
     #!/usr/bin/env bash
     set -euo pipefail
     find src test -name '*.hs' -print0 | xargs -0 fourmolu -i
-    cabal-fmt -i cardano-ledger-read.cabal
+    # cabal-fmt doesn't support GHC 9.12 yet
+    # cabal-fmt -i cardano-ledger-read.cabal
     nixfmt ./*.nix nix/*.nix
 
 # Run hlint

@@ -12,7 +12,8 @@ let
   shell = { pkgs, ... }: {
     tools = {
       cabal = indexTool;
-      cabal-fmt = indexTool;
+      # cabal-fmt doesn't support base-4.21 (GHC 9.12) yet
+      # cabal-fmt = indexTool;
       haskell-language-server = {
         index-state = indexState;
         version = "latest";
@@ -64,7 +65,8 @@ let
 
   quality-shell = { pkgs, ... }: {
     tools = {
-      cabal-fmt = indexTool;
+      # cabal-fmt doesn't support base-4.21 (GHC 9.12) yet
+      # cabal-fmt = indexTool;
       fourmolu = indexTool;
       hlint = indexTool;
     };
