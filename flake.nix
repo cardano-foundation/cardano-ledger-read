@@ -9,22 +9,20 @@
     haskellNix.url = "github:input-output-hk/haskell.nix";
     nixpkgs.follows = "haskellNix/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    flake-utils.url =
-      "github:hamishmack/flake-utils/hkm/nested-hydraJobs";
+    flake-utils.url = "github:hamishmack/flake-utils/hkm/nested-hydraJobs";
     iohkNix = {
       url = "github:input-output-hk/iohk-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     CHaP = {
-      url =
-        "github:intersectmbo/cardano-haskell-packages?ref=repo";
+      url = "github:intersectmbo/cardano-haskell-packages?ref=repo";
       flake = false;
     };
     mkdocs.url = "github:paolino/dev-assets?dir=mkdocs";
   };
 
-  outputs = inputs@{ self, nixpkgs, flake-parts, haskellNix, CHaP
-    , iohkNix, mkdocs, ... }:
+  outputs = inputs@{ self, nixpkgs, flake-parts, haskellNix, CHaP, iohkNix
+    , mkdocs, ... }:
     let
       version = self.dirtyShortRev or self.shortRev;
       parts = flake-parts.lib.mkFlake { inherit inputs; } {
@@ -46,19 +44,14 @@
               mkdocs = mkdocs.packages.${system};
             };
 
-          in
-          rec {
+          in rec {
             packages = {
-              inherit
-                (project.packages)
-                cardano-ledger-read-tests
-                ;
+              inherit (project.packages) cardano-ledger-read-tests;
             };
             inherit (project) devShells;
           };
       };
-    in
-    {
+    in {
       inherit (parts) packages devShells;
       inherit version;
     };

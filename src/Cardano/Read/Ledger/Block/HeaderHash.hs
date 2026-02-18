@@ -1,11 +1,12 @@
--- |
--- Module      : Cardano.Read.Ledger.Block.HeaderHash
--- Copyright   : © 2024 Cardano Foundation
--- License     : Apache-2.0
---
--- Block header hash types and extraction. Header hashes uniquely identify
--- blocks and are used for chain linking (each block references the hash
--- of its predecessor).
+{- |
+Module      : Cardano.Read.Ledger.Block.HeaderHash
+Copyright   : © 2024 Cardano Foundation
+License     : Apache-2.0
+
+Block header hash types and extraction. Header hashes uniquely identify
+blocks and are used for chain linking (each block references the hash
+of its predecessor).
+-}
 module Cardano.Read.Ledger.Block.HeaderHash
     ( -- * Header hash types
       HeaderHash (..)

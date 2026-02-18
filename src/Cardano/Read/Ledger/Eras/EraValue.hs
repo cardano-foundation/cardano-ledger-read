@@ -49,12 +49,13 @@ import Generics.SOP
     , (:.:) (..)
     )
 
--- |
--- A value which is in one particular 'Era'.
---
--- This existential type wraps an era-indexed value @f era@ while hiding
--- the specific era. Pattern matching on 'EraValue' brings the 'IsEra'
--- constraint into scope, allowing era-specific operations.
+{- |
+A value which is in one particular 'Era'.
+
+This existential type wraps an era-indexed value @f era@ while hiding
+the specific era. Pattern matching on 'EraValue' brings the 'IsEra'
+constraint into scope, allowing era-specific operations.
+-}
 data EraValue f = forall (era :: Type). IsEra era => EraValue (f era)
 
 {-# INLINEABLE getEra #-}
@@ -122,16 +123,18 @@ instance (All (Compose NFData f) KnownEras) => NFData (EraValue f) where
         Babbage -> rnf x
         Conway -> rnf x
 
--- |
--- Apply an era-polymorphic function to an 'EraValue', producing
--- an era-independent result.
+{- |
+Apply an era-polymorphic function to an 'EraValue', producing
+an era-independent result.
+-}
 applyEraFun
     :: (forall era. IsEra era => f era -> g) -> EraValue f -> g
 applyEraFun f (EraValue x) = f x
 
--- |
--- Apply an era-polymorphic function to an 'EraValue', producing
--- another 'EraValue' with a different type constructor.
+{- |
+Apply an era-polymorphic function to an 'EraValue', producing
+another 'EraValue' with a different type constructor.
+-}
 applyEraFunValue
     :: (forall era. IsEra era => f era -> g era)
     -> EraValue f
@@ -144,9 +147,10 @@ extractEraValue (EraValue (K x)) = x
 
 {-# INLINEABLE parseEraIndex #-}
 
--- |
--- Parse an era index (0-6) into an 'EraValue' containing the 'Era' singleton.
--- Returns 'Nothing' for invalid indices.
+{- |
+Parse an era index (0-6) into an 'EraValue' containing the 'Era' singleton.
+Returns 'Nothing' for invalid indices.
+-}
 parseEraIndex :: Int -> Maybe (EraValue Era)
 parseEraIndex ix = case ix of
     0 -> Just $ EraValue Byron

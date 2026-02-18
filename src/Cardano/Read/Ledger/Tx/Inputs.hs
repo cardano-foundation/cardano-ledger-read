@@ -50,10 +50,11 @@ import Data.Set
     ( Set
     )
 
--- |
--- Era-specific input collection type.
---
--- Byron uses a non-empty list while later eras use a set.
+{- |
+Era-specific input collection type.
+
+Byron uses a non-empty list while later eras use a set.
+-}
 type family InputsType era where
     InputsType Byron = NonEmpty BY.TxIn
     InputsType Shelley = Set SH.TxIn

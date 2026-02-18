@@ -72,11 +72,12 @@ data Era era where
 deriving instance Eq (Era era)
 deriving instance Show (Era era)
 
--- |
--- Singleton class for eras.
---
--- This class provides a way to obtain the 'Era' value for a given era type.
--- All known eras have instances of this class.
+{- |
+Singleton class for eras.
+
+This class provides a way to obtain the 'Era' value for a given era type.
+All known eras have instances of this class.
+-}
 class IsEra era where
     -- | Get the singleton 'Era' value for this era type.
     theEra :: Era era

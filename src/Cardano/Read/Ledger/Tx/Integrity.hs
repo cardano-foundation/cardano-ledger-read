@@ -52,12 +52,13 @@ import Data.Maybe.Strict
     ( StrictMaybe
     )
 
--- |
--- Era-specific script integrity hash type.
---
--- Pre-Alonzo eras return unit @()@ as Plutus scripts are not supported.
--- Alonzo and later return an optional hash committing to redeemers,
--- datums, and cost models.
+{- |
+Era-specific script integrity hash type.
+
+Pre-Alonzo eras return unit @()@ as Plutus scripts are not supported.
+Alonzo and later return an optional hash committing to redeemers,
+datums, and cost models.
+-}
 type family IntegrityType era where
     IntegrityType Byron = ()
     IntegrityType Shelley = ()

@@ -59,11 +59,12 @@ import Data.Maybe.Strict
     ( StrictMaybe
     )
 
--- |
--- Era-specific collateral return output type.
---
--- Pre-Babbage eras return unit @()@ as collateral return is not supported.
--- Babbage and later return an optional output for collateral change.
+{- |
+Era-specific collateral return output type.
+
+Pre-Babbage eras return unit @()@ as collateral return is not supported.
+Babbage and later return an optional output for collateral change.
+-}
 type family CollateralOutputsType era where
     CollateralOutputsType Byron = ()
     CollateralOutputsType Shelley = ()

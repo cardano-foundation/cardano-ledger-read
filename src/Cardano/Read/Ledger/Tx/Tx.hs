@@ -32,14 +32,15 @@ import Cardano.Read.Ledger.Eras
     , Shelley
     )
 
--- |
--- Closed type family returning the ledger transaction type for each known era.
---
--- The transaction type differs between eras:
---
--- * Byron uses 'ATxAux'
--- * Shelley through Mary use 'ShelleyTx'
--- * Alonzo and later use 'AlonzoTx'
+{- |
+Closed type family returning the ledger transaction type for each known era.
+
+The transaction type differs between eras:
+
+* Byron uses 'ATxAux'
+* Shelley through Mary use 'ShelleyTx'
+* Alonzo and later use 'AlonzoTx'
+-}
 type family TxT era where
     TxT Byron = Byron.ATxAux ()
     TxT Shelley = ShelleyTx Shelley
@@ -49,11 +50,12 @@ type family TxT era where
     TxT Babbage = AlonzoTx Babbage
     TxT Conway = AlonzoTx Conway
 
--- |
--- Era-indexed transaction wrapper.
---
--- Use the accessor functions from the @Cardano.Read.Ledger.Tx.*@ modules
--- to extract transaction components like inputs, outputs, fees, etc.
+{- |
+Era-indexed transaction wrapper.
+
+Use the accessor functions from the @Cardano.Read.Ledger.Tx.*@ modules
+to extract transaction components like inputs, outputs, fees, etc.
+-}
 newtype Tx era = Tx {unTx :: TxT era}
 
 deriving instance Show (TxT era) => Show (Tx era)

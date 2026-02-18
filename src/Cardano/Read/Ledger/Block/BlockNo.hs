@@ -1,10 +1,11 @@
--- |
--- Module      : Cardano.Read.Ledger.Block.BlockNo
--- Copyright   : © 2024 Cardano Foundation
--- License     : Apache-2.0
---
--- Block number extraction from block headers. Block numbers are
--- sequential identifiers for blocks in the chain.
+{- |
+Module      : Cardano.Read.Ledger.Block.BlockNo
+Copyright   : © 2024 Cardano Foundation
+License     : Apache-2.0
+
+Block number extraction from block headers. Block numbers are
+sequential identifiers for blocks in the chain.
+-}
 module Cardano.Read.Ledger.Block.BlockNo
     ( -- * Block number type
       BlockNo (..)
@@ -62,11 +63,12 @@ getEraBlockNo = case theEra @era of
   where
     k = BlockNo . fromIntegral . O.unBlockNo
 
--- |
--- Block number representing the sequential index of a block in the chain.
---
--- Block numbers start at 0 for the genesis block and increment by 1
--- for each subsequent block.
+{- |
+Block number representing the sequential index of a block in the chain.
+
+Block numbers start at 0 for the genesis block and increment by 1
+for each subsequent block.
+-}
 newtype BlockNo = BlockNo {unBlockNo :: Natural}
     deriving (Eq, Ord, Show, Generic, Enum)
 

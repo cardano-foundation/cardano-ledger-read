@@ -53,12 +53,13 @@ import Data.Sequence.Strict
     ( StrictSeq
     )
 
--- |
--- Era-specific certificate type.
---
--- Byron returns unit @()@ as staking is not supported.
--- Shelley through Babbage use 'ShelleyTxCert' for staking operations.
--- Conway uses 'ConwayTxCert' which adds governance certificates.
+{- |
+Era-specific certificate type.
+
+Byron returns unit @()@ as staking is not supported.
+Shelley through Babbage use 'ShelleyTxCert' for staking operations.
+Conway uses 'ConwayTxCert' which adds governance certificates.
+-}
 type family CertificatesType era where
     CertificatesType Byron =
         ()

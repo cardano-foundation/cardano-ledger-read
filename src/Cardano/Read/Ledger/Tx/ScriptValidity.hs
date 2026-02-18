@@ -43,11 +43,12 @@ import Control.Lens
     ( (^.)
     )
 
--- |
--- Era-specific script validity type.
---
--- Pre-Alonzo eras return unit @()@ as they lack Plutus scripts.
--- Alonzo and later return 'IsValid' indicating script validation result.
+{- |
+Era-specific script validity type.
+
+Pre-Alonzo eras return unit @()@ as they lack Plutus scripts.
+Alonzo and later return 'IsValid' indicating script validation result.
+-}
 type family ScriptValidityType era where
     ScriptValidityType Byron = ()
     ScriptValidityType Shelley = ()

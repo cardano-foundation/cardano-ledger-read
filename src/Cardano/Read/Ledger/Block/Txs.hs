@@ -3,13 +3,14 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 
--- |
--- Module      : Cardano.Read.Ledger.Block.Txs
--- Copyright   : © 2024 Cardano Foundation
--- License     : Apache-2.0
---
--- Transaction extraction from blocks. This module provides the function
--- to extract the list of transactions contained within a block.
+{- |
+Module      : Cardano.Read.Ledger.Block.Txs
+Copyright   : © 2024 Cardano Foundation
+License     : Apache-2.0
+
+Transaction extraction from blocks. This module provides the function
+to extract the list of transactions contained within a block.
+-}
 module Cardano.Read.Ledger.Block.Txs
     ( getEraTransactions
     ) where

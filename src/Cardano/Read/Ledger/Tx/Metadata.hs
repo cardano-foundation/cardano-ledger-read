@@ -54,11 +54,12 @@ import Data.Maybe.Strict
     ( StrictMaybe
     )
 
--- |
--- Era-specific metadata (auxiliary data) type.
---
--- Byron returns unit @()@ as metadata is not supported.
--- Later eras return optional auxiliary data structures.
+{- |
+Era-specific metadata (auxiliary data) type.
+
+Byron returns unit @()@ as metadata is not supported.
+Later eras return optional auxiliary data structures.
+-}
 type family MetadataType era where
     MetadataType Byron = ()
     MetadataType Shelley = StrictMaybe (ShelleyTxAuxData Shelley)

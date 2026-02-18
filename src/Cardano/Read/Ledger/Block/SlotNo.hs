@@ -1,10 +1,11 @@
--- |
--- Module      : Cardano.Read.Ledger.Block.SlotNo
--- Copyright   : © 2024 Cardano Foundation
--- License     : Apache-2.0
---
--- Slot number extraction from block headers. Slot numbers represent
--- the time slot in which a block was produced.
+{- |
+Module      : Cardano.Read.Ledger.Block.SlotNo
+Copyright   : © 2024 Cardano Foundation
+License     : Apache-2.0
+
+Slot number extraction from block headers. Slot numbers represent
+the time slot in which a block was produced.
+-}
 module Cardano.Read.Ledger.Block.SlotNo
     ( -- * Slot number type
       SlotNo (..)
@@ -64,11 +65,12 @@ getEraSlotNo = case theEra @era of
     Babbage -> \(BHeader h) -> fromLedgerSlotNo $ pHeaderSlot h
     Conway -> \(BHeader h) -> fromLedgerSlotNo $ pHeaderSlot h
 
--- |
--- Slot number representing a time slot in the blockchain.
---
--- Each slot corresponds to a fixed time interval (currently 1 second
--- on mainnet). A block can be produced in each slot.
+{- |
+Slot number representing a time slot in the blockchain.
+
+Each slot corresponds to a fixed time interval (currently 1 second
+on mainnet). A block can be produced in each slot.
+-}
 newtype SlotNo = SlotNo {unSlotNo :: Natural}
     deriving (Eq, Ord, Show, Generic, Enum)
 

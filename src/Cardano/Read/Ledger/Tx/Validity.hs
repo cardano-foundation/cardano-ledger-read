@@ -55,14 +55,15 @@ import Control.Lens
     ( (^.)
     )
 
--- |
--- Era-specific validity type.
---
--- Validity constraints differ across eras:
---
--- * Byron: Unit @()@ (no explicit validity)
--- * Shelley: 'SlotNo' (time-to-live, transaction invalid after this slot)
--- * Allegra and later: 'ValidityInterval' (valid between two slots)
+{- |
+Era-specific validity type.
+
+Validity constraints differ across eras:
+
+* Byron: Unit @()@ (no explicit validity)
+* Shelley: 'SlotNo' (time-to-live, transaction invalid after this slot)
+* Allegra and later: 'ValidityInterval' (valid between two slots)
+-}
 type family ValidityType era where
     ValidityType Byron = ()
     ValidityType Shelley = SlotNo

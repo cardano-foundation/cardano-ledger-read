@@ -50,11 +50,12 @@ import Data.Set
     ( Set
     )
 
--- |
--- Era-specific collateral inputs type.
---
--- Pre-Alonzo eras return unit @()@ as collateral is not supported.
--- Alonzo and later return a set of transaction inputs used as collateral.
+{- |
+Era-specific collateral inputs type.
+
+Pre-Alonzo eras return unit @()@ as collateral is not supported.
+Alonzo and later return a set of transaction inputs used as collateral.
+-}
 type family CollateralInputsType era where
     CollateralInputsType Byron = ()
     CollateralInputsType Shelley = ()
