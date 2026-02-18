@@ -1,0 +1,162 @@
+cabal-version:   3.6
+name:            cardano-ledger-read
+version:         0.1.0.0
+synopsis:        Read Cardano block data, parametrized by era
+description:
+  Data types and functions for blockchain data,
+  such as blocks, transactions, certificates, etc.
+  These types are
+
+  * self-contained,
+  * compatible with types from the [cardano-ledger](https://github.com/IntersectMBO/cardano-ledger) packages,
+  * parameterized uniformly over the Cardano era (Byron, Shelley, …),
+  * but: focus on reading from the blockchain,
+    self-contained construction of transactions is not a design goal,
+  * but: not complete, tailored to wallet needs
+
+  This package is useful when reading data from the blockchain,
+  when you have handle data from historic eras in a structured manner.
+  When writing data to the blockchain, i.e. when creating new transactions,
+  we instead recommend that you use
+  types that are specific to the current (and the upcoming) era.
+
+license:         Apache-2.0
+license-file:    LICENSE
+author:          Cardano Foundation (High Assurance Lab)
+maintainer:      hal@cardanofoundation.org
+copyright:       2023-2026 Cardano Foundation
+category:        Cardano
+build-type:      Simple
+homepage:
+  https://github.com/cardano-foundation/cardano-ledger-read
+
+bug-reports:
+  https://github.com/cardano-foundation/cardano-ledger-read/issues
+
+stability:       experimental
+tested-with:     GHC ==9.12.2
+extra-doc-files:
+  CHANGELOG.md
+  README.md
+
+common settings
+  ghc-options:
+    -Wall -Werror -Wunused-imports -Wunused-packages
+    -Wmissing-export-lists -Wname-shadowing
+    -Wredundant-constraints
+
+  default-extensions:
+    BangPatterns
+    DataKinds
+    DeriveAnyClass
+    DeriveGeneric
+    DerivingStrategies
+    DerivingVia
+    DuplicateRecordFields
+    FlexibleContexts
+    FlexibleInstances
+    GADTs
+    GeneralizedNewtypeDeriving
+    ImportQualifiedPost
+    LambdaCase
+    MultiParamTypeClasses
+    NamedFieldPuns
+    NoImplicitPrelude
+    OverloadedStrings
+    PatternSynonyms
+    RankNTypes
+    RecordWildCards
+    ScopedTypeVariables
+    StandaloneDeriving
+    StrictData
+    TupleSections
+    TypeApplications
+    TypeFamilies
+    TypeOperators
+
+  default-language: Haskell2010
+
+library
+  import:          settings
+  exposed-modules:
+    Cardano.Read.Ledger.Address
+    Cardano.Read.Ledger.Block.BHeader
+    Cardano.Read.Ledger.Block.Block
+    Cardano.Read.Ledger.Block.BlockNo
+    Cardano.Read.Ledger.Block.HeaderHash
+    Cardano.Read.Ledger.Block.SlotNo
+    Cardano.Read.Ledger.Block.Txs
+    Cardano.Read.Ledger.Eras
+    Cardano.Read.Ledger.Eras.EraValue
+    Cardano.Read.Ledger.Eras.KnownEras
+    Cardano.Read.Ledger.Hash
+    Cardano.Read.Ledger.PParams
+    Cardano.Read.Ledger.Tx.CBOR
+    Cardano.Read.Ledger.Tx.Certificates
+    Cardano.Read.Ledger.Tx.CollateralInputs
+    Cardano.Read.Ledger.Tx.CollateralOutputs
+    Cardano.Read.Ledger.Tx.Eras
+    Cardano.Read.Ledger.Tx.ExtraSigs
+    Cardano.Read.Ledger.Tx.Fee
+    Cardano.Read.Ledger.Tx.Hash
+    Cardano.Read.Ledger.Tx.Inputs
+    Cardano.Read.Ledger.Tx.Integrity
+    Cardano.Read.Ledger.Tx.Metadata
+    Cardano.Read.Ledger.Tx.Mint
+    Cardano.Read.Ledger.Tx.Output
+    Cardano.Read.Ledger.Tx.Outputs
+    Cardano.Read.Ledger.Tx.ReferenceInputs
+    Cardano.Read.Ledger.Tx.ScriptValidity
+    Cardano.Read.Ledger.Tx.Tx
+    Cardano.Read.Ledger.Tx.TxId
+    Cardano.Read.Ledger.Tx.Validity
+    Cardano.Read.Ledger.Tx.Withdrawals
+    Cardano.Read.Ledger.Tx.Witnesses
+    Cardano.Read.Ledger.Value
+
+  build-depends:
+    , base                          >=4.14  && <5
+    , bytestring                    >=0.10  && <0.13
+    , cardano-crypto-class          >=2.2   && <2.3
+    , cardano-crypto-wrapper        >=1.5   && <1.7
+    , cardano-ledger-allegra        >=1.7   && <1.8
+    , cardano-ledger-alonzo         >=1.13  && <1.14
+    , cardano-ledger-api            >=1.11  && <1.12
+    , cardano-ledger-babbage        >=1.11  && <1.12
+    , cardano-ledger-binary
+    , cardano-ledger-byron          >=1.1   && <1.2
+    , cardano-ledger-conway         >=1.19  && <1.20
+    , cardano-ledger-core           >=1.17  && <1.18
+    , cardano-ledger-mary           >=1.8   && <1.9
+    , cardano-ledger-shelley        >=1.16  && <1.17
+    , cardano-protocol-tpraos       >=1.4   && <1.5
+    , cardano-strict-containers     >=0.1.3 && <0.2
+    , containers                    >=0.5   && <0.8
+    , deepseq                       >=1.4   && <1.6
+    , generics-sop                  >=0.5   && <0.6
+    , lens                          >=5.2   && <5.4
+    , nothunks                      >=0.1.5 && <0.4
+    , ouroboros-consensus           >=0.27  && <0.28
+    , ouroboros-consensus-cardano   >=0.25  && <0.26
+    , ouroboros-consensus-protocol  >=0.12  && <0.13
+    , ouroboros-network-api         >=0.14  && <0.15
+    , text                          >=1.2   && <2.2
+
+  hs-source-dirs: src
+
+test-suite unit-tests
+  import:             settings
+  ghc-options:
+    -threaded -rtsopts -with-rtsopts=-M2G -with-rtsopts=-N4
+
+  build-tool-depends: hspec-discover:hspec-discover
+  other-modules:      Test.Unit.Cardano.Read.Ledger.TxSpec
+  type:               exitcode-stdio-1.0
+  hs-source-dirs:     test
+  main-is:            main.hs
+  build-depends:
+    , base
+    , bytestring
+    , cardano-ledger-read
+    , hspec   >=2.11 && <2.12
+    , memory  >=0.18 && <0.19
