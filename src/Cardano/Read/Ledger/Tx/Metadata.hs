@@ -36,6 +36,7 @@ import Cardano.Read.Ledger.Eras
     , Babbage
     , Byron
     , Conway
+    , Dijkstra
     , Era (..)
     , IsEra (..)
     , Mary
@@ -68,6 +69,7 @@ type family MetadataType era where
     MetadataType Alonzo = StrictMaybe (AlonzoTxAuxData Alonzo)
     MetadataType Babbage = StrictMaybe (AlonzoTxAuxData Babbage)
     MetadataType Conway = StrictMaybe (AlonzoTxAuxData Conway)
+    MetadataType Dijkstra = StrictMaybe (AlonzoTxAuxData Dijkstra)
 
 -- | Era-indexed transaction metadata wrapper.
 newtype Metadata era = Metadata (MetadataType era)
@@ -87,5 +89,6 @@ getEraMetadata = case theEra @era of
     Alonzo -> metadata
     Babbage -> metadata
     Conway -> metadata
+    Dijkstra -> metadata
   where
     metadata = onTx $ Metadata . view auxDataTxL

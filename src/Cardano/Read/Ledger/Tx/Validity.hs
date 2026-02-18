@@ -40,6 +40,7 @@ import Cardano.Read.Ledger.Eras
     , Babbage
     , Byron
     , Conway
+    , Dijkstra
     , Era (..)
     , IsEra (..)
     , Mary
@@ -72,6 +73,7 @@ type family ValidityType era where
     ValidityType Alonzo = ValidityInterval
     ValidityType Babbage = ValidityInterval
     ValidityType Conway = ValidityInterval
+    ValidityType Dijkstra = ValidityInterval
 
 -- | Era-indexed transaction validity wrapper.
 newtype Validity era = Validity (ValidityType era)
@@ -91,6 +93,7 @@ getEraValidity = case theEra @era of
     Alonzo -> allegraValidity
     Babbage -> allegraValidity
     Conway -> allegraValidity
+    Dijkstra -> allegraValidity
   where
     anyValidity l = onTx $ \tx -> Validity $ tx ^. bodyTxL . l
     allegraValidity = anyValidity vldtTxBodyL

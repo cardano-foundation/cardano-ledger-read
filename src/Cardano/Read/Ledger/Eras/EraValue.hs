@@ -74,6 +74,7 @@ knownEras =
     , EraValue Alonzo
     , EraValue Babbage
     , EraValue Conway
+    , EraValue Dijkstra
     ]
 
 instance (All (Compose Show f) KnownEras) => Show (EraValue f) where
@@ -85,6 +86,7 @@ instance (All (Compose Show f) KnownEras) => Show (EraValue f) where
         Alonzo -> "InAlonzo " ++ show x
         Babbage -> "InBabbage " ++ show x
         Conway -> "InConway " ++ show x
+        Dijkstra -> "InDijkstra " ++ show x
 
 instance (All (Compose Eq f) KnownEras) => Eq (EraValue f) where
     {-# INLINEABLE (==) #-}
@@ -97,6 +99,7 @@ instance (All (Compose Eq f) KnownEras) => Eq (EraValue f) where
             (Alonzo, Alonzo) -> v == w
             (Babbage, Babbage) -> v == w
             (Conway, Conway) -> v == w
+            (Dijkstra, Dijkstra) -> v == w
             (_, _) -> False
 
 instance (All (Compose Ord f) KnownEras) => Ord (EraValue f) where
@@ -110,6 +113,7 @@ instance (All (Compose Ord f) KnownEras) => Ord (EraValue f) where
             (Alonzo, Alonzo) -> compare x y
             (Babbage, Babbage) -> compare x y
             (Conway, Conway) -> compare x y
+            (Dijkstra, Dijkstra) -> compare x y
             (_, _) -> compare (indexEraValue ex) (indexEraValue ey)
 
 instance (All (Compose NFData f) KnownEras) => NFData (EraValue f) where
@@ -122,6 +126,7 @@ instance (All (Compose NFData f) KnownEras) => NFData (EraValue f) where
         Alonzo -> rnf x
         Babbage -> rnf x
         Conway -> rnf x
+        Dijkstra -> rnf x
 
 {- |
 Apply an era-polymorphic function to an 'EraValue', producing
@@ -148,7 +153,7 @@ extractEraValue (EraValue (K x)) = x
 {-# INLINEABLE parseEraIndex #-}
 
 {- |
-Parse an era index (0-6) into an 'EraValue' containing the 'Era' singleton.
+Parse an era index (0-7) into an 'EraValue' containing the 'Era' singleton.
 Returns 'Nothing' for invalid indices.
 -}
 parseEraIndex :: Int -> Maybe (EraValue Era)
@@ -160,6 +165,7 @@ parseEraIndex ix = case ix of
     4 -> Just $ EraValue Alonzo
     5 -> Just $ EraValue Babbage
     6 -> Just $ EraValue Conway
+    7 -> Just $ EraValue Dijkstra
     _ -> Nothing
 
 -- | Sequence one applicative functor level out.

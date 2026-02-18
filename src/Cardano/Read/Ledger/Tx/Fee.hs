@@ -32,6 +32,7 @@ import Cardano.Read.Ledger.Eras
     , Babbage
     , Byron
     , Conway
+    , Dijkstra
     , Era (..)
     , IsEra (..)
     , Mary
@@ -61,6 +62,7 @@ type family FeeType era where
     FeeType Alonzo = Coin
     FeeType Babbage = Coin
     FeeType Conway = Coin
+    FeeType Dijkstra = Coin
 
 -- | Era-indexed transaction fee wrapper.
 newtype Fee era = Fee (FeeType era)
@@ -80,5 +82,6 @@ getEraFee = case theEra @era of
     Alonzo -> mkFee
     Babbage -> mkFee
     Conway -> mkFee
+    Dijkstra -> mkFee
   where
     mkFee = onTx $ \tx -> Fee $ tx ^. bodyTxL . feeTxBodyL

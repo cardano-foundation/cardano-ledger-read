@@ -39,6 +39,7 @@ import Cardano.Read.Ledger.Eras
     , Babbage
     , Byron
     , Conway
+    , Dijkstra
     , Era (..)
     , IsEra (..)
     , Mary
@@ -78,6 +79,7 @@ type family OutputsType era where
     OutputsType Alonzo = StrictSeq (AlonzoTxOut Alonzo)
     OutputsType Babbage = StrictSeq (BabbageTxOut Babbage)
     OutputsType Conway = StrictSeq (BabbageTxOut Conway)
+    OutputsType Dijkstra = StrictSeq (BabbageTxOut Dijkstra)
 
 -- | Era-indexed transaction outputs wrapper.
 newtype Outputs era = Outputs (OutputsType era)
@@ -97,5 +99,6 @@ getEraOutputs = case theEra :: Era era of
     Alonzo -> outputs
     Babbage -> outputs
     Conway -> outputs
+    Dijkstra -> outputs
   where
     outputs = onTx $ Outputs . view (bodyTxL . outputsTxBodyL)

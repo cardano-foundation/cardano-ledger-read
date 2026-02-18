@@ -24,12 +24,12 @@ import Cardano.Ledger.Address
     ( RewardAccount
     , unWithdrawals
     )
-import Cardano.Ledger.Api qualified as Ledger
 import Cardano.Ledger.Coin
     ( Coin
     )
 import Cardano.Ledger.Core
-    ( bodyTxL
+    ( EraTx
+    , bodyTxL
     , withdrawalsTxBodyL
     )
 import Cardano.Read.Ledger.Eras
@@ -38,6 +38,7 @@ import Cardano.Read.Ledger.Eras
     , Babbage
     , Byron
     , Conway
+    , Dijkstra
     , Era (..)
     , IsEra (..)
     , Mary
@@ -50,11 +51,13 @@ import Cardano.Read.Ledger.Tx.Tx
     ( Tx (..)
     )
 import Control.Lens
-    ( view
+    ( (^.)
     )
 import Data.Map
     ( Map
     )
+
+import Cardano.Ledger.Core qualified
 
 {- |
 Era-specific withdrawal type.
@@ -70,6 +73,7 @@ type family WithdrawalsType era where
     WithdrawalsType Alonzo = RewardWithdrawals
     WithdrawalsType Babbage = RewardWithdrawals
     WithdrawalsType Conway = RewardWithdrawals
+    WithdrawalsType Dijkstra = RewardWithdrawals
 
 -- | Map from reward accounts to coin amounts being withdrawn.
 type RewardWithdrawals = Map RewardAccount Coin
@@ -88,18 +92,20 @@ getEraWithdrawals
     :: forall era. IsEra era => Tx era -> Withdrawals era
 getEraWithdrawals = case theEra @era of
     Byron -> \_ -> Withdrawals ()
-    Shelley -> withdrawals
-    Allegra -> withdrawals
-    Mary -> withdrawals
-    Alonzo -> withdrawals
-    Babbage -> withdrawals
-    Conway -> withdrawals
+    Shelley -> shelleyWithdrawals'
+    Allegra -> shelleyWithdrawals'
+    Mary -> shelleyWithdrawals'
+    Alonzo -> shelleyWithdrawals'
+    Babbage -> shelleyWithdrawals'
+    Conway -> shelleyWithdrawals'
+    Dijkstra -> shelleyWithdrawals'
   where
-    withdrawals = onTx $ Withdrawals . shelleyWithdrawals
+    shelleyWithdrawals' = onTx $ \tx ->
+        Withdrawals $ unWithdrawals $ tx ^. bodyTxL . withdrawalsTxBodyL
 
 -- | Extract withdrawals from a Shelley-era (or later) transaction.
 shelleyWithdrawals
-    :: Ledger.EraTx era
-    => Ledger.Tx era
+    :: EraTx era
+    => Cardano.Ledger.Core.Tx era
     -> Map RewardAccount Coin
-shelleyWithdrawals = unWithdrawals . view (bodyTxL . withdrawalsTxBodyL)
+shelleyWithdrawals tx = unWithdrawals $ tx ^. bodyTxL . withdrawalsTxBodyL

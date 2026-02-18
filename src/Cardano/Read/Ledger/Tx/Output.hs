@@ -68,6 +68,7 @@ import Cardano.Read.Ledger.Eras
     , Babbage
     , Byron
     , Conway
+    , Dijkstra
     , Era (..)
     , IsEra (..)
     , Mary
@@ -99,6 +100,7 @@ type family OutputType era where
     OutputType Alonzo = AlonzoTxOut Alonzo
     OutputType Babbage = BabbageTxOut Babbage
     OutputType Conway = BabbageTxOut Conway
+    OutputType Dijkstra = BabbageTxOut Dijkstra
 
 -- | Era-indexed single transaction output wrapper.
 newtype Output era = Output (OutputType era)
@@ -123,6 +125,7 @@ getEraCompactAddr = case theEra :: Era era of
     Alonzo -> address (view compactAddrTxOutL)
     Babbage -> address (view compactAddrTxOutL)
     Conway -> address (view compactAddrTxOutL)
+    Dijkstra -> address (view compactAddrTxOutL)
 
 -- | Helper function for type inference in 'getEraCompactAddr'.
 address
@@ -143,6 +146,7 @@ getEraValue = case theEra :: Era era of
     Alonzo -> value (view valueTxOutL)
     Babbage -> value (view valueTxOutL)
     Conway -> value (view valueTxOutL)
+    Dijkstra -> value (view valueTxOutL)
 
 -- | Helper function for type inference in 'getEraValue'.
 value :: (OutputType era -> ValueType era) -> Output era -> Value era
@@ -187,6 +191,7 @@ upgradeToOutputBabbage = case theEra :: Era era of
     Alonzo -> Just . onOutput upgradeTxOut
     Babbage -> Just
     Conway -> const Nothing
+    Dijkstra -> const Nothing
 
 {-# INLINEABLE upgradeToOutputConway #-}
 
@@ -220,6 +225,7 @@ upgradeToOutputConway = case theEra :: Era era of
             $ upgradeTxOut . upgradeTxOut
     Babbage -> onOutput upgradeTxOut
     Conway -> id
+    Dijkstra -> error "upgradeToOutputConway: cannot downgrade from Dijkstra"
 
 -- | Helper function for type inference in era upgrade operations.
 onOutput
@@ -245,6 +251,7 @@ serializeOutput = case theEra :: Era era of
     Alonzo -> encode (eraProtVerLow @Alonzo)
     Babbage -> encode (eraProtVerLow @Babbage)
     Conway -> encode (eraProtVerLow @Conway)
+    Dijkstra -> encode (eraProtVerLow @Dijkstra)
   where
     encode
         :: EncCBOR (OutputType era)
@@ -272,6 +279,7 @@ deserializeOutput = case theEra :: Era era of
     Alonzo -> decode (eraProtVerLow @Alonzo) "AlonzoTxOut"
     Babbage -> decode (eraProtVerLow @Babbage) "BabbageTxOut"
     Conway -> decode (eraProtVerLow @Conway) "ConwayTxOut"
+    Dijkstra -> decode (eraProtVerLow @Dijkstra) "DijkstraTxOut"
   where
     decode
         :: DecCBOR (OutputType era)

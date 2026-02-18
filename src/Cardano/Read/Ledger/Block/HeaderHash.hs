@@ -32,8 +32,6 @@ import Prelude
 
 import Cardano.Crypto.Hashing qualified as Byron
 
-import Cardano.Ledger.Binary (EncCBOR, EncCBORGroup)
-import Cardano.Ledger.Core qualified as Core
 import Cardano.Ledger.Hashes
     ( EraIndependentBlockHeader
     )
@@ -51,6 +49,7 @@ import Cardano.Read.Ledger.Eras
     , Babbage
     , Byron
     , Conway
+    , Dijkstra
     , Era (..)
     , IsEra (..)
     , Mary
@@ -78,9 +77,6 @@ import Ouroboros.Consensus.Shelley.Ledger
     ( ShelleyHash (unShelleyHash)
     )
 import Ouroboros.Consensus.Shelley.Ledger.Block qualified as O
-import Ouroboros.Consensus.Shelley.Protocol.Abstract
-    ( ShelleyProtocolHeader
-    )
 import Ouroboros.Consensus.Shelley.Protocol.Abstract qualified as Shelley
 import Ouroboros.Consensus.Shelley.Protocol.Praos
     (
@@ -103,6 +99,7 @@ type family HeaderHashT era where
     HeaderHashT Alonzo = ShelleyHash
     HeaderHashT Babbage = ShelleyHash
     HeaderHashT Conway = ShelleyHash
+    HeaderHashT Dijkstra = ShelleyHash
 
 -- | Era-indexed block header hash wrapper.
 newtype HeaderHash era = HeaderHash (HeaderHashT era)
@@ -120,13 +117,10 @@ getEraHeaderHash = case theEra @era of
     Alonzo -> \(Block block) -> HeaderHash $ getHeaderHashShelley block
     Babbage -> \(Block block) -> HeaderHash $ getHeaderHashShelley block
     Conway -> \(Block block) -> HeaderHash $ getHeaderHashShelley block
+    Dijkstra -> \(Block block) -> HeaderHash $ getHeaderHashShelley block
 
 getHeaderHashShelley
-    :: ( Shelley.ProtocolHeaderSupportsEnvelope (praos StandardCrypto)
-       , Core.Era era
-       , EncCBORGroup (Core.TxSeq era)
-       , EncCBOR (ShelleyProtocolHeader (praos StandardCrypto))
-       )
+    :: Shelley.ProtocolHeaderSupportsEnvelope (praos StandardCrypto)
     => O.ShelleyBlock (praos StandardCrypto) era
     -> ShelleyHash
 getHeaderHashShelley
@@ -155,6 +149,7 @@ getRawHeaderHash = case theEra @era of
     Alonzo -> \(HeaderHash h) -> castHash $ unShelleyHash h
     Babbage -> \(HeaderHash h) -> castHash $ unShelleyHash h
     Conway -> \(HeaderHash h) -> castHash $ unShelleyHash h
+    Dijkstra -> \(HeaderHash h) -> castHash $ unShelleyHash h
   where
     fromByron :: ByronHash -> Hash Blake2b_256 EraIndependentBlockHeader
     fromByron =
@@ -176,16 +171,13 @@ type family PrevHeaderHashT era where
     PrevHeaderHashT Alonzo = PrevHash
     PrevHeaderHashT Babbage = PrevHash
     PrevHeaderHashT Conway = PrevHash
+    PrevHeaderHashT Dijkstra = PrevHash
 
 -- | Era-specific previous header hash type from the ledger
 newtype PrevHeaderHash era = PrevHeaderHash (PrevHeaderHashT era)
 
 getPrevHeaderHashShelley
-    :: ( Shelley.ProtocolHeaderSupportsEnvelope proto
-       , Core.Era era
-       , EncCBORGroup (Core.TxSeq era)
-       , EncCBOR (ShelleyProtocolHeader proto)
-       )
+    :: Shelley.ProtocolHeaderSupportsEnvelope proto
     => O.ShelleyBlock proto era
     -> PrevHash
 getPrevHeaderHashShelley (O.ShelleyBlock (Shelley.Block header _) _) =
@@ -202,3 +194,4 @@ getEraPrevHeaderHash = case theEra @era of
     Alonzo -> \(Block block) -> PrevHeaderHash $ getPrevHeaderHashShelley block
     Babbage -> \(Block block) -> PrevHeaderHash $ getPrevHeaderHashShelley block
     Conway -> \(Block block) -> PrevHeaderHash $ getPrevHeaderHashShelley block
+    Dijkstra -> \(Block block) -> PrevHeaderHash $ getPrevHeaderHashShelley block

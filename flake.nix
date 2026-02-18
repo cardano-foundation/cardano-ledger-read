@@ -40,7 +40,7 @@
             };
             project = pkgs.callPackage ./nix/project.nix {
               inherit CHaP;
-              indexState = "2026-01-29T00:00:00Z";
+              indexState = "2025-09-29T13:55:56Z";
               mkdocs = mkdocs.packages.${system};
             };
 
