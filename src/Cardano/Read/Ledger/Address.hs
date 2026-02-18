@@ -26,6 +26,7 @@ import Cardano.Read.Ledger.Eras
     , Babbage
     , Byron
     , Conway
+    , Dijkstra
     , Mary
     , Shelley
     )
@@ -43,6 +44,7 @@ type family CompactAddrType era where
     CompactAddrType Alonzo = SH.CompactAddr
     CompactAddrType Babbage = SH.CompactAddr
     CompactAddrType Conway = SH.CompactAddr
+    CompactAddrType Dijkstra = SH.CompactAddr
 
 -- | Era-indexed compact address wrapper.
 newtype CompactAddr era = CompactAddr (CompactAddrType era)

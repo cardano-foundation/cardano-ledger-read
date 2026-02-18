@@ -33,6 +33,7 @@ import Cardano.Read.Ledger.Eras
     , Babbage
     , Byron
     , Conway
+    , Dijkstra
     , Era (..)
     , IsEra (..)
     , Mary
@@ -65,6 +66,7 @@ type family WitnessesType era where
     WitnessesType Alonzo = AlonzoTxWits Alonzo
     WitnessesType Babbage = AlonzoTxWits Babbage
     WitnessesType Conway = AlonzoTxWits Conway
+    WitnessesType Dijkstra = AlonzoTxWits Dijkstra
 
 -- | Era-indexed transaction witnesses wrapper.
 newtype Witnesses era = Witnesses (WitnessesType era)
@@ -84,5 +86,6 @@ getEraWitnesses = case theEra @era of
     Alonzo -> witnesses
     Babbage -> witnesses
     Conway -> witnesses
+    Dijkstra -> witnesses
   where
     witnesses = onTx $ Witnesses . view witsTxL

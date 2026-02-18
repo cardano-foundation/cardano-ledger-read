@@ -29,6 +29,7 @@ import Cardano.Read.Ledger.Eras
     , Babbage
     , Byron
     , Conway
+    , Dijkstra
     , Era (..)
     , IsEra (..)
     , Mary
@@ -63,6 +64,7 @@ type family InputsType era where
     InputsType Alonzo = Set SH.TxIn
     InputsType Babbage = Set SH.TxIn
     InputsType Conway = Set SH.TxIn
+    InputsType Dijkstra = Set SH.TxIn
 
 -- | Era-indexed transaction inputs wrapper.
 newtype Inputs era = Inputs (InputsType era)
@@ -82,5 +84,6 @@ getEraInputs = case theEra @era of
     Alonzo -> shelleyInputs
     Babbage -> shelleyInputs
     Conway -> shelleyInputs
+    Dijkstra -> shelleyInputs
   where
     shelleyInputs = onTx $ \tx -> Inputs (tx ^. bodyTxL . inputsTxBodyL)

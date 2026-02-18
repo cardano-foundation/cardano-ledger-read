@@ -126,16 +126,17 @@ library
     , cardano-crypto-class          >=2.2   && <2.4
     , cardano-crypto-praos          >=2.2   && <2.3
     , cardano-crypto-wrapper        >=1.5   && <1.7
-    , cardano-ledger-allegra        >=1.7   && <1.8
-    , cardano-ledger-alonzo         >=1.13  && <1.14
-    , cardano-ledger-api            >=1.11  && <1.12
-    , cardano-ledger-babbage        >=1.11  && <1.12
+    , cardano-ledger-allegra        >=1.8   && <1.9
+    , cardano-ledger-alonzo         >=1.14  && <1.15
+    , cardano-ledger-api            >=1.12  && <1.13
+    , cardano-ledger-babbage        >=1.12  && <1.13
     , cardano-ledger-binary
-    , cardano-ledger-byron          >=1.1   && <1.2
-    , cardano-ledger-conway         >=1.19  && <1.20
-    , cardano-ledger-core           >=1.17  && <1.18
-    , cardano-ledger-mary           >=1.8   && <1.9
-    , cardano-ledger-shelley        >=1.16  && <1.17
+    , cardano-ledger-byron          >=1.2   && <1.3
+    , cardano-ledger-conway         >=1.20  && <1.21
+    , cardano-ledger-core           >=1.18  && <1.19
+    , cardano-ledger-dijkstra
+    , cardano-ledger-mary           >=1.9   && <1.10
+    , cardano-ledger-shelley        >=1.17  && <1.18
     , cardano-protocol-tpraos       >=1.4   && <1.5
     , cardano-strict-containers     >=0.1.3 && <0.2
     , containers                    >=0.5   && <0.8
@@ -143,10 +144,10 @@ library
     , generics-sop                  >=0.5   && <0.6
     , lens                          >=5.2   && <5.4
     , nothunks                      >=0.1.5 && <0.4
-    , ouroboros-consensus           >=0.27  && <0.28
-    , ouroboros-consensus-cardano   >=0.25  && <0.26
-    , ouroboros-consensus-protocol  >=0.12  && <0.13
-    , ouroboros-network-api         >=0.14  && <0.15
+    , ouroboros-consensus           >=0.30  && <0.31
+    , ouroboros-consensus-cardano   >=0.26  && <0.27
+    , ouroboros-consensus-protocol  >=0.13  && <0.14
+    , ouroboros-network-api         >=0.16  && <0.17
     , text                          >=1.2   && <2.2
 
   hs-source-dirs: src

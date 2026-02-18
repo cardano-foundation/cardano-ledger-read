@@ -34,6 +34,7 @@ import Cardano.Read.Ledger.Eras
     , Babbage
     , Byron
     , Conway
+    , Dijkstra
     , Era (..)
     , IsEra (..)
     , Mary
@@ -70,6 +71,8 @@ type family IntegrityType era where
         StrictMaybe ScriptIntegrityHash
     IntegrityType Conway =
         StrictMaybe ScriptIntegrityHash
+    IntegrityType Dijkstra =
+        StrictMaybe ScriptIntegrityHash
 
 -- | Era-indexed script integrity hash wrapper.
 newtype Integrity era = Integrity (IntegrityType era)
@@ -89,6 +92,7 @@ getEraIntegrity = case theEra @era of
     Alonzo -> alonzoIntegrity
     Babbage -> alonzoIntegrity
     Conway -> alonzoIntegrity
+    Dijkstra -> alonzoIntegrity
   where
     alonzoIntegrity = onTx $ \tx ->
         Integrity
