@@ -83,6 +83,11 @@ library
     Cardano.Read.Ledger.Block.BHeader
     Cardano.Read.Ledger.Block.Block
     Cardano.Read.Ledger.Block.BlockNo
+    Cardano.Read.Ledger.Block.Gen
+    Cardano.Read.Ledger.Block.Gen.Babbage
+    Cardano.Read.Ledger.Block.Gen.BlockParameters
+    Cardano.Read.Ledger.Block.Gen.Byron
+    Cardano.Read.Ledger.Block.Gen.Shelley
     Cardano.Read.Ledger.Block.HeaderHash
     Cardano.Read.Ledger.Block.SlotNo
     Cardano.Read.Ledger.Block.Txs
@@ -117,7 +122,9 @@ library
   build-depends:
     , base                          >=4.14  && <5
     , bytestring                    >=0.10  && <0.13
-    , cardano-crypto-class          >=2.2   && <2.3
+    , cardano-crypto                >=1.1   && <1.4
+    , cardano-crypto-class          >=2.2   && <2.4
+    , cardano-crypto-praos          >=2.2   && <2.3
     , cardano-crypto-wrapper        >=1.5   && <1.7
     , cardano-ledger-allegra        >=1.7   && <1.8
     , cardano-ledger-alonzo         >=1.13  && <1.14
@@ -150,8 +157,11 @@ test-suite unit-tests
     -threaded -rtsopts -with-rtsopts=-M2G -with-rtsopts=-N4
 
   build-tool-depends: hspec-discover:hspec-discover
-  other-modules:      Test.Unit.Cardano.Read.Ledger.TxSpec
-  type:               exitcode-stdio-1.0
+  other-modules:
+    Test.Unit.Cardano.Read.Ledger.BlockSpec
+    Test.Unit.Cardano.Read.Ledger.TxSpec
+
+  type: exitcode-stdio-1.0
   hs-source-dirs:     test
   main-is:            main.hs
   build-depends:
