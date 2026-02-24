@@ -24,8 +24,7 @@ import Cardano.Ledger.BaseTypes
     ( ProtVer (..)
     )
 import Cardano.Ledger.Binary
-    ( EncCBOR
-    , Version
+    ( Version
     )
 import Cardano.Ledger.Keys
     ( VKey (..)
@@ -70,10 +69,9 @@ import Cardano.Ledger.Core qualified as L
 import Cardano.Ledger.Slot qualified as L
 import Ouroboros.Consensus.Shelley.Ledger qualified as O
 
--- | Construct a block for a Praos era (Babbage, Conway).
+-- | Construct a block for a Praos era (Babbage, Conway, Dijkstra).
 mkBabbageBlock
-    :: ( L.EraSegWits era
-       , EncCBOR (HeaderEra era)
+    :: ( L.EraBlockBody era
        , HeaderEra era ~ Header StandardCrypto
        , TxT cardano_era ~ L.Tx era
        )

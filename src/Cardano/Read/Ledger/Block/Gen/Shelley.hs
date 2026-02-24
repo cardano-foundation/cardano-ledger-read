@@ -57,9 +57,6 @@ import Cardano.Ledger.BaseTypes
     ( ProtVer (..)
     , Version
     )
-import Cardano.Ledger.Binary
-    ( EncCBOR
-    )
 import Cardano.Ledger.Block
     ( Block (..)
     )
@@ -94,6 +91,10 @@ import Cardano.Read.Ledger.Tx.Tx
     , TxT
     , unTx
     )
+import Control.Lens
+    ( (&)
+    , (.~)
+    )
 import Data.Proxy
     ( Proxy (..)
     )
@@ -125,6 +126,7 @@ type family HeaderEra era where
     HeaderEra L.AlonzoEra = BHeader StandardCrypto
     HeaderEra L.BabbageEra = Header StandardCrypto
     HeaderEra L.ConwayEra = Header StandardCrypto
+    HeaderEra L.DijkstraEra = Header StandardCrypto
 
 --------------------------------------------------------------------------------
 -- Valid for Shelley, Allegra, Mary, Alonzo
@@ -160,8 +162,7 @@ headerShelley v slotNumber blockNumber =
 
 -- | Construct a block for a TPraos era (Shelley, Allegra, Mary, Alonzo).
 mkShelleyBlock
-    :: ( L.EraSegWits era
-       , EncCBOR (HeaderEra era)
+    :: ( L.EraBlockBody era
        , HeaderEra era ~ BHeader StandardCrypto
        , TxT cardano_era ~ L.Tx era
        )
@@ -180,8 +181,7 @@ mkShelleyBlock v BlockParameters{blockNumber, slotNumber, txs} =
 
 -- | Construct a block given transactions and a header.
 mkAnyAfterShelleyBlock
-    :: ( L.EraSegWits era
-       , EncCBOR (HeaderEra era)
+    :: ( L.EraBlockBody era
        , HeaderEra era ~ O.ShelleyProtocolHeader proto
        , TxT era2 ~ L.Tx era
        )
@@ -197,19 +197,18 @@ hash :: O.ShelleyHash
 hash = O.ShelleyHash $ Crypto.UnsafeHash $ BS.pack $ replicate 32 42
 
 block
-    :: ( L.EraSegWits era
-       , EncCBOR (HeaderEra era)
-       )
+    :: (L.EraBlockBody era)
     => [L.Tx era]
     -> HeaderEra era
     -> L.Block (HeaderEra era) era
 block txs header' = Block header' (txseq txs)
 
 txseq
-    :: (L.EraSegWits era)
+    :: (L.EraBlockBody era)
     => [L.Tx era]
-    -> L.TxSeq era
-txseq = L.toTxSeq . Seq.fromList
+    -> L.BlockBody era
+txseq txs =
+    L.mkBasicBlockBody & L.txSeqBlockBodyL .~ Seq.fromList txs
 
 type KES = Crypto.Sum6KES Crypto.Ed25519DSIGN Crypto.Blake2b_256
 

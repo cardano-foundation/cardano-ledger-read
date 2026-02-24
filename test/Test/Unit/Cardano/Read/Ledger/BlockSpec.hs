@@ -43,6 +43,7 @@ import Cardano.Read.Ledger.Eras
     , Babbage
     , Byron
     , Conway
+    , Dijkstra
     , IsEra
     , Mary
     , Shelley
@@ -65,6 +66,7 @@ import Test.Unit.Cardano.Read.Ledger.TxSpec
     , babbageTx
     , byronTx
     , conwayTx
+    , dijkstraTx
     , maryTx
     , shelleyTx
     )
@@ -82,6 +84,7 @@ spec = do
     describe "Alonzo" $ blockTests @Alonzo alonzoTx
     describe "Babbage" $ blockTests @Babbage babbageTx
     describe "Conway" $ blockTests @Conway conwayTx
+    describe "Dijkstra" $ blockTests @Dijkstra dijkstraTx
 
 blockTests :: forall era. IsEra era => Tx era -> Spec
 blockTests tx = do
