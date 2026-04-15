@@ -63,10 +63,10 @@ type family ExtraSigsType era where
     ExtraSigsType Shelley = ()
     ExtraSigsType Allegra = ()
     ExtraSigsType Mary = ()
-    ExtraSigsType Alonzo = Set (KeyHash 'Witness)
-    ExtraSigsType Babbage = Set (KeyHash 'Witness)
-    ExtraSigsType Conway = Set (KeyHash 'Witness)
-    ExtraSigsType Dijkstra = Set (KeyHash 'Witness)
+    ExtraSigsType Alonzo = Set (KeyHash Guard)
+    ExtraSigsType Babbage = Set (KeyHash Guard)
+    ExtraSigsType Conway = Set (KeyHash Guard)
+    ExtraSigsType Dijkstra = Set (KeyHash Guard)
 
 -- | Era-indexed required extra signers wrapper.
 newtype ExtraSigs era = ExtraSigs (ExtraSigsType era)

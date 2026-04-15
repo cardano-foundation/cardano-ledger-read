@@ -73,7 +73,7 @@ getEraTxHash = case theEra @era of
 
 -- | Extract the transaction hash from a Shelley-era (or later) transaction.
 shelleyTxHash
-    :: SL.Core.EraTx era => SL.Core.Tx era -> Crypto.ByteString
+    :: SL.Core.EraTx era => SL.Core.Tx SL.Core.TopTx era -> Crypto.ByteString
 shelleyTxHash tx = fromShelleyTxId $ txIdTxBody (tx ^. bodyTxL)
 
 -- | Extract the transaction hash from a Byron-era transaction.

@@ -73,7 +73,7 @@ import Ouroboros.Consensus.Shelley.Ledger qualified as O
 mkBabbageBlock
     :: ( L.EraBlockBody era
        , HeaderEra era ~ Header StandardCrypto
-       , TxT cardano_era ~ L.Tx era
+       , TxT cardano_era ~ L.Tx L.TopTx era
        )
     => Version
     -> BlockParameters cardano_era

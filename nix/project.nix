@@ -7,6 +7,10 @@ let
       lib.mkForce [ [ pkgs.libsodium-vrf ] ];
     packages.cardano-crypto-class.components.library.pkgconfig =
       lib.mkForce [[ pkgs.libsodium-vrf pkgs.secp256k1 pkgs.libblst ]];
+    packages.cardano-lmdb.components.library.pkgconfig =
+      lib.mkForce [ [ pkgs.lmdb ] ];
+    packages.blockio-uring.components.library.pkgconfig =
+      lib.mkForce [ [ pkgs.liburing ] ];
   };
   shell = { pkgs, ... }: {
     tools = {
@@ -31,13 +35,16 @@ let
       fourmolu = indexTool;
       hlint = indexTool;
     };
-    withHoogle = true;
+    # GHC 9.12.2 tyConStupidTheta haddock panic on several deps
+    withHoogle = false;
     buildInputs = with pkgs; [
       just
       nixfmt-classic
       pkgs.mkdocs
       mkdocs.from-nixpkgs
       mkdocs.markdown-callouts
+      lmdb
+      liburing
     ];
     shellHook = ''
       echo "cardano-ledger-read dev shell"
