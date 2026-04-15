@@ -38,13 +38,13 @@ The transaction type differs between eras:
 -}
 type family TxT era where
     TxT Byron = Byron.ATxAux ()
-    TxT Shelley = Core.Tx Shelley
-    TxT Allegra = Core.Tx Allegra
-    TxT Mary = Core.Tx Mary
-    TxT Alonzo = Core.Tx Alonzo
-    TxT Babbage = Core.Tx Babbage
-    TxT Conway = Core.Tx Conway
-    TxT Dijkstra = Core.Tx Dijkstra
+    TxT Shelley = Core.Tx Core.TopTx Shelley
+    TxT Allegra = Core.Tx Core.TopTx Allegra
+    TxT Mary = Core.Tx Core.TopTx Mary
+    TxT Alonzo = Core.Tx Core.TopTx Alonzo
+    TxT Babbage = Core.Tx Core.TopTx Babbage
+    TxT Conway = Core.Tx Core.TopTx Conway
+    TxT Dijkstra = Core.Tx Core.TopTx Dijkstra
 
 {- |
 Era-indexed transaction wrapper.

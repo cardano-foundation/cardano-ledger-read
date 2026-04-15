@@ -21,7 +21,7 @@ module Cardano.Read.Ledger.Tx.Withdrawals
 import Prelude
 
 import Cardano.Ledger.Address
-    ( RewardAccount
+    ( AccountAddress
     , unWithdrawals
     )
 import Cardano.Ledger.Coin
@@ -76,7 +76,7 @@ type family WithdrawalsType era where
     WithdrawalsType Dijkstra = RewardWithdrawals
 
 -- | Map from reward accounts to coin amounts being withdrawn.
-type RewardWithdrawals = Map RewardAccount Coin
+type RewardWithdrawals = Map AccountAddress Coin
 
 -- | Era-indexed stake reward withdrawals wrapper.
 newtype Withdrawals era
@@ -106,6 +106,6 @@ getEraWithdrawals = case theEra @era of
 -- | Extract withdrawals from a Shelley-era (or later) transaction.
 shelleyWithdrawals
     :: EraTx era
-    => Cardano.Ledger.Core.Tx era
-    -> Map RewardAccount Coin
+    => Cardano.Ledger.Core.Tx Cardano.Ledger.Core.TopTx era
+    -> Map AccountAddress Coin
 shelleyWithdrawals tx = unWithdrawals $ tx ^. bodyTxL . withdrawalsTxBodyL

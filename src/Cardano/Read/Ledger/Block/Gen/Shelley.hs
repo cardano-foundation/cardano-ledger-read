@@ -37,7 +37,7 @@ import Cardano.Crypto.Hash
 import Cardano.Crypto.KES
     ( UnsoundPureKESAlgorithm (..)
     , UnsoundPureSignKeyKES
-    , sizeSignKeyKES
+    , signKeySizeKES
     , unsoundPureSignedKES
     )
 import Cardano.Crypto.Seed
@@ -164,7 +164,7 @@ headerShelley v slotNumber blockNumber =
 mkShelleyBlock
     :: ( L.EraBlockBody era
        , HeaderEra era ~ BHeader StandardCrypto
-       , TxT cardano_era ~ L.Tx era
+       , TxT cardano_era ~ L.Tx L.TopTx era
        )
     => Version
     -> BlockParameters cardano_era
@@ -183,7 +183,7 @@ mkShelleyBlock v BlockParameters{blockNumber, slotNumber, txs} =
 mkAnyAfterShelleyBlock
     :: ( L.EraBlockBody era
        , HeaderEra era ~ O.ShelleyProtocolHeader proto
-       , TxT era2 ~ L.Tx era
+       , TxT era2 ~ L.Tx L.TopTx era
        )
     => [Tx era2]
     -> HeaderEra era
@@ -198,14 +198,14 @@ hash = O.ShelleyHash $ Crypto.UnsafeHash $ BS.pack $ replicate 32 42
 
 block
     :: (L.EraBlockBody era)
-    => [L.Tx era]
+    => [L.Tx L.TopTx era]
     -> HeaderEra era
     -> L.Block (HeaderEra era) era
 block txs header' = Block header' (txseq txs)
 
 txseq
     :: (L.EraBlockBody era)
-    => [L.Tx era]
+    => [L.Tx L.TopTx era]
     -> L.BlockBody era
 txseq txs =
     L.mkBasicBlockBody & L.txSeqBlockBodyL .~ Seq.fromList txs
@@ -243,7 +243,7 @@ seedKeyKES =
         $ B8.pack
         $ flip replicate 'a'
         $ fromIntegral
-        $ sizeSignKeyKES (Proxy @KES)
+        $ signKeySizeKES (Proxy @KES)
 
 -- | Generate a dummy KES signing key.
 mkKeyKES' :: UnsoundPureKESAlgorithm a => UnsoundPureSignKeyKES a

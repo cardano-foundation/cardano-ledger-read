@@ -84,6 +84,6 @@ byronTxId = serializeCborHash . taTx
 
 shelleyTxId
     :: SH.Core.EraTx era
-    => SH.Core.Tx era
+    => SH.Core.Tx SH.Core.TopTx era
     -> SH.TxIn.TxId
 shelleyTxId tx = txIdTxBody (tx ^. bodyTxL)

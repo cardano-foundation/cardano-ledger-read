@@ -22,6 +22,7 @@ import Cardano.Chain.UTxO qualified as Byron
 import Cardano.Ledger.Api qualified as Ledger
 import Cardano.Ledger.Core
     ( EraBlockBody
+    , TopTx
     , txSeqBlockBodyL
     )
 import Cardano.Ledger.Shelley.API qualified as Shelley
@@ -78,6 +79,6 @@ getTxsFromBlockByron block =
 getTxsFromBlockShelleyAndOn
     :: EraBlockBody era
     => O.ShelleyBlock proto era
-    -> [Ledger.Tx era]
+    -> [Ledger.Tx TopTx era]
 getTxsFromBlockShelleyAndOn (O.ShelleyBlock (Shelley.Block _ txs) _) =
     toList (txs ^. txSeqBlockBodyL)

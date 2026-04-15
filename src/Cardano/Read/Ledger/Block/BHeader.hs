@@ -18,7 +18,7 @@ module Cardano.Read.Ledger.Block.BHeader
 import Prelude
 
 import Cardano.Ledger.Block
-    ( bheader
+    ( blockHeader
     )
 import Cardano.Protocol.Crypto (StandardCrypto)
 import Cardano.Protocol.TPraos.BHeader qualified as TPraos
@@ -79,10 +79,10 @@ deriving instance Eq (BHeaderT era) => Eq (BHeader era)
 getEraBHeader :: forall era. IsEra era => Block era -> BHeader era
 getEraBHeader = case theEra :: Era era of
     Byron -> \(Block block) -> BHeader $ getHeader block
-    Shelley -> \(Block (O.ShelleyBlock block _)) -> BHeader $ bheader block
-    Allegra -> \(Block (O.ShelleyBlock block _)) -> BHeader $ bheader block
-    Mary -> \(Block (O.ShelleyBlock block _)) -> BHeader $ bheader block
-    Alonzo -> \(Block (O.ShelleyBlock block _)) -> BHeader $ bheader block
-    Babbage -> \(Block (O.ShelleyBlock block _)) -> BHeader $ bheader block
-    Conway -> \(Block (O.ShelleyBlock block _)) -> BHeader $ bheader block
-    Dijkstra -> \(Block (O.ShelleyBlock block _)) -> BHeader $ bheader block
+    Shelley -> \(Block (O.ShelleyBlock block _)) -> BHeader $ blockHeader block
+    Allegra -> \(Block (O.ShelleyBlock block _)) -> BHeader $ blockHeader block
+    Mary -> \(Block (O.ShelleyBlock block _)) -> BHeader $ blockHeader block
+    Alonzo -> \(Block (O.ShelleyBlock block _)) -> BHeader $ blockHeader block
+    Babbage -> \(Block (O.ShelleyBlock block _)) -> BHeader $ blockHeader block
+    Conway -> \(Block (O.ShelleyBlock block _)) -> BHeader $ blockHeader block
+    Dijkstra -> \(Block (O.ShelleyBlock block _)) -> BHeader $ blockHeader block
