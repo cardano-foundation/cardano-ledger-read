@@ -35,8 +35,7 @@ let
       fourmolu = indexTool;
       hlint = indexTool;
     };
-    # GHC 9.12.2 tyConStupidTheta haddock panic on several deps
-    withHoogle = false;
+    withHoogle = true;
     buildInputs = with pkgs; [
       just
       nixfmt-classic
@@ -53,7 +52,7 @@ let
   mkProject = ctx@{ lib, pkgs, ... }: {
     name = "cardano-ledger-read";
     src = ./..;
-    compiler-nix-name = "ghc9122";
+    compiler-nix-name = "ghc9123";
 
     modules = [
       fix-libs
@@ -76,11 +75,15 @@ let
     withHoogle = false;
     buildInputs = [ pkgs.nixfmt-classic pkgs.just ];
   };
+  docs-shell = pkgs.mkShell {
+    buildInputs = [ pkgs.mkdocs mkdocs.from-nixpkgs mkdocs.markdown-callouts ];
+  };
 
 in {
   devShells = {
     default = project.shellFor shell;
     quality = project.shellFor quality-shell;
+    docs = docs-shell;
   };
   packages.cardano-ledger-read-tests =
     project.hsPkgs.cardano-ledger-read.components.tests.unit-tests;

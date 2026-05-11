@@ -19,4 +19,4 @@ jobs:
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          nix develop --quiet --command mkdocs gh-deploy --force
+          nix develop --quiet .#docs --command mkdocs gh-deploy --force
