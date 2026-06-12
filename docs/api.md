@@ -3,6 +3,21 @@
 This page provides an overview of the library's module structure
 and main types.
 
+## Conventions
+
+Most component modules follow the same shape:
+
+- an era-indexed wrapper type (e.g. `Inputs era`, `Outputs era`,
+  `Fee era`), usually a `newtype` over a closed type family
+  (`InputsType era`, `OutputsType era`, …) that selects the underlying
+  `cardano-ledger` type per era;
+- an accessor named `getEra<Component>` that projects that component out
+  of a `Tx era` or `Block era` (e.g. `getEraInputs :: Tx era -> Inputs
+  era`).
+
+Era-polymorphic accessors carry an `IsEra era` constraint and dispatch
+on the `Era` GADT singleton internally.
+
 ## Eras
 
 Modules for handling Cardano's era system.
@@ -15,12 +30,19 @@ Modules for handling Cardano's era system.
 
 ### EraValue
 
-The `EraValue` type wraps values that exist in a specific era:
+The `EraValue` type is an existential wrapper around an era-indexed
+value `f era`, hiding the specific era behind an `IsEra` constraint:
 
 ```haskell
-data EraValue f where
-    EraValue :: IsEra era => f era -> EraValue f
+data EraValue f = forall era. IsEra era => EraValue (f era)
 ```
+
+Pattern matching on `EraValue` brings the `IsEra` constraint back into
+scope. Use `applyEraFun` to run an era-polymorphic function against the
+wrapped value, `getEra` to recover the `Era` singleton, and
+`eraValueSerialize` / `parseEraIndex` for the era-index serialization
+prism. `fromConsensusBlock` is the typical source of an
+`EraValue Block`.
 
 ## Blocks
 
@@ -87,3 +109,16 @@ Modules for reading transaction components.
 | `Cardano.Read.Ledger.Value` | Multi-asset values |
 | `Cardano.Read.Ledger.Hash` | Hash utilities |
 | `Cardano.Read.Ledger.PParams` | Protocol parameters |
+
+## Block generators
+
+Helpers for constructing blocks in tests and benchmarks. These are
+exposed but intended for testing rather than production reads.
+
+| Module | Description |
+|--------|-------------|
+| `Cardano.Read.Ledger.Block.Gen` | `mkBlockEra` — build a `Block era` from `BlockParameters` |
+| `Cardano.Read.Ledger.Block.Gen.BlockParameters` | `BlockParameters` (slot, block number, txs) |
+| `Cardano.Read.Ledger.Block.Gen.Byron` | Byron block construction |
+| `Cardano.Read.Ledger.Block.Gen.Shelley` | Shelley-family (TPraos) block construction |
+| `Cardano.Read.Ledger.Block.Gen.Babbage` | Babbage-family (Praos) block construction |
