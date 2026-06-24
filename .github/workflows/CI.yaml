@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: nix-enabled-runners
     steps:
       - uses: actions/checkout@v6
       - uses: paolino/dev-assets/setup-nix@v0.0.1
@@ -20,7 +20,7 @@ jobs:
       - run: nix run --quiet .#cardano-ledger-read-tests
 
   code-quality:
-    runs-on: ubuntu-latest
+    runs-on: nix-enabled-runners
     steps:
       - uses: actions/checkout@v6
       - uses: paolino/dev-assets/setup-nix@v0.0.1
