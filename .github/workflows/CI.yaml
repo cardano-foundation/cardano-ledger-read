@@ -14,18 +14,20 @@ jobs:
     runs-on: nix-enabled-runners
     steps:
       - uses: actions/checkout@v6
-      - uses: paolino/dev-assets/setup-nix@v0.0.1
+      - uses: cachix/cachix-action@v15
         with:
-          cachix-auth-token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: paolino
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: nix run --quiet .#cardano-ledger-read-tests
 
   code-quality:
     runs-on: nix-enabled-runners
     steps:
       - uses: actions/checkout@v6
-      - uses: paolino/dev-assets/setup-nix@v0.0.1
+      - uses: cachix/cachix-action@v15
         with:
-          cachix-auth-token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: paolino
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - name: Check formatting
         run: |
           nix develop --quiet .#quality --command bash -c \
