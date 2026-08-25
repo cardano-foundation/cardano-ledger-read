@@ -21,7 +21,10 @@ import Cardano.Ledger.Block
     ( blockHeader
     )
 import Cardano.Protocol.Crypto (StandardCrypto)
-import Cardano.Protocol.TPraos.BHeader qualified as TPraos
+import Cardano.Protocol.Praos.BlockHeader
+    ( Header
+    )
+import Cardano.Protocol.TPraos.BlockHeader qualified as TPraos
 import Cardano.Read.Ledger.Block.Block
     ( Block (..)
     )
@@ -44,9 +47,6 @@ import Ouroboros.Consensus.Block.Abstract
     ( getHeader
     )
 import Ouroboros.Consensus.Byron.Ledger.Block qualified as Byron
-import Ouroboros.Consensus.Protocol.Praos.Header
-    ( Header
-    )
 import Ouroboros.Consensus.Shelley.Ledger.Block qualified as O
 import Ouroboros.Consensus.Shelley.Protocol.Praos
     (

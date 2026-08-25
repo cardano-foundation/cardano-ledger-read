@@ -10,6 +10,15 @@ module Test.Unit.Cardano.Read.Ledger.BlockSpec
 
 import Prelude
 
+import Cardano.Crypto.KES
+    ( fixedSize
+    )
+import Cardano.Crypto.VRF
+    ( SignKeyVRF
+    )
+import Cardano.Crypto.VRF.Praos
+    ( PraosVRF
+    )
 import Cardano.Read.Ledger.Block.BHeader
     ( getEraBHeader
     )
@@ -54,6 +63,9 @@ import Cardano.Read.Ledger.Eras.EraValue
 import Cardano.Read.Ledger.Tx.Tx
     ( Tx (..)
     )
+import Data.Proxy
+    ( Proxy (..)
+    )
 import Test.Hspec
     ( Spec
     , describe
@@ -77,6 +89,11 @@ import Test.Unit.Cardano.Read.Ledger.TxSpec
 
 spec :: Spec
 spec = do
+    describe "VRF seed size" $ do
+        it "Praos sign-key size is 64 bytes"
+            $ fixedSize (Proxy :: Proxy (SignKeyVRF PraosVRF))
+            `shouldBe` 64
+
     describe "Byron" $ blockTests @Byron byronTx
     describe "Shelley" $ blockTests @Shelley shelleyTx
     describe "Allegra" $ blockTests @Allegra allegraTx

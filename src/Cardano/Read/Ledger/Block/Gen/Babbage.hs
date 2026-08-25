@@ -32,7 +32,11 @@ import Cardano.Ledger.Keys
 import Cardano.Protocol.Crypto
     ( StandardCrypto
     )
-import Cardano.Protocol.TPraos.BHeader
+import Cardano.Protocol.Praos.BlockHeader
+    ( Header (..)
+    , HeaderBody (..)
+    )
+import Cardano.Protocol.TPraos.BlockHeader
     ( PrevHash (..)
     )
 import Cardano.Read.Ledger.Block.BlockNo
@@ -59,10 +63,6 @@ import Cardano.Read.Ledger.Tx.Tx
     )
 import Ouroboros.Consensus.Protocol.Praos
     ( Praos
-    )
-import Ouroboros.Consensus.Protocol.Praos.Header
-    ( Header (..)
-    , HeaderBody (..)
     )
 
 import Cardano.Ledger.Core qualified as L
