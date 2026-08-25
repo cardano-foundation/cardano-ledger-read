@@ -7,8 +7,6 @@ let
       lib.mkForce [ [ pkgs.libsodium-vrf ] ];
     packages.cardano-crypto-class.components.library.pkgconfig =
       lib.mkForce [[ pkgs.libsodium-vrf pkgs.secp256k1 pkgs.libblst ]];
-    packages.cardano-lmdb.components.library.pkgconfig =
-      lib.mkForce [ [ pkgs.lmdb ] ];
     packages.blockio-uring.components.library.pkgconfig =
       lib.mkForce [ [ pkgs.liburing ] ];
   };

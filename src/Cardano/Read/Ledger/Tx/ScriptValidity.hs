@@ -19,8 +19,8 @@ module Cardano.Read.Ledger.Tx.ScriptValidity
 import Prelude
 
 import Cardano.Ledger.Alonzo.Tx
-    ( IsValid
-    , isValidTxL
+    ( IsPhase2Valid
+    , isPhase2ValidTxL
     )
 import Cardano.Read.Ledger.Eras
     ( Allegra
@@ -48,17 +48,17 @@ import Control.Lens
 Era-specific script validity type.
 
 Pre-Alonzo eras return unit @()@ as they lack Plutus scripts.
-Alonzo and later return 'IsValid' indicating script validation result.
+Alonzo and later return 'IsPhase2Valid' indicating script validation result.
 -}
 type family ScriptValidityType era where
     ScriptValidityType Byron = ()
     ScriptValidityType Shelley = ()
     ScriptValidityType Allegra = ()
     ScriptValidityType Mary = ()
-    ScriptValidityType Alonzo = IsValid
-    ScriptValidityType Babbage = IsValid
-    ScriptValidityType Conway = IsValid
-    ScriptValidityType Dijkstra = IsValid
+    ScriptValidityType Alonzo = IsPhase2Valid
+    ScriptValidityType Babbage = IsPhase2Valid
+    ScriptValidityType Conway = IsPhase2Valid
+    ScriptValidityType Dijkstra = IsPhase2Valid
 
 -- | Era-indexed script validity tag wrapper.
 newtype ScriptValidity era = ScriptValidity (ScriptValidityType era)
@@ -83,4 +83,4 @@ getEraScriptValidity = case theEra @era of
     Conway -> alonzoScriptValidity
     Dijkstra -> alonzoScriptValidity
   where
-    alonzoScriptValidity = onTx $ \tx -> ScriptValidity $ tx ^. isValidTxL
+    alonzoScriptValidity = onTx $ \tx -> ScriptValidity $ tx ^. isPhase2ValidTxL

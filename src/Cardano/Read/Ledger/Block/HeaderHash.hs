@@ -37,7 +37,7 @@ import Cardano.Ledger.Hashes
     )
 import Cardano.Ledger.Shelley.API qualified as Shelley
 import Cardano.Protocol.Crypto (StandardCrypto)
-import Cardano.Protocol.TPraos.BHeader
+import Cardano.Protocol.TPraos.BlockHeader
     ( PrevHash
     )
 import Cardano.Read.Ledger.Block.Block

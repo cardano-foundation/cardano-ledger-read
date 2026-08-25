@@ -1,3 +1,4 @@
+{-# LANGUAGE PackageImports #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 {- |
@@ -37,6 +38,7 @@ import Cardano.Crypto.Hash
 import Cardano.Crypto.KES
     ( UnsoundPureKESAlgorithm (..)
     , UnsoundPureSignKeyKES
+    , fixedSize
     , signKeySizeKES
     , unsoundPureSignedKES
     )
@@ -48,6 +50,7 @@ import Cardano.Crypto.Util
     )
 import Cardano.Crypto.VRF
     ( CertifiedVRF (CertifiedVRF)
+    , SignKeyVRF
     , VRFAlgorithm (..)
     )
 import Cardano.Crypto.VRF.Praos
@@ -66,16 +69,14 @@ import Cardano.Ledger.Keys
 import Cardano.Protocol.Crypto
     ( StandardCrypto
     )
-import Cardano.Protocol.TPraos.BHeader
+import Cardano.Protocol.Praos.BlockHeader
+    ( Header (..)
+    )
+import Cardano.Protocol.TPraos.BlockHeader
     ( BHBody (..)
     , BHeader (..)
     , HashHeader (..)
     , PrevHash (..)
-    )
-import Cardano.Protocol.TPraos.OCert
-    ( KESPeriod (..)
-    , OCert (..)
-    , OCertSignable (OCertSignable)
     )
 import Cardano.Read.Ledger.Block.BlockNo
     ( BlockNo (..)
@@ -98,11 +99,13 @@ import Control.Lens
 import Data.Proxy
     ( Proxy (..)
     )
-import Ouroboros.Consensus.Protocol.Praos.Header
-    ( Header (..)
-    )
 import Ouroboros.Consensus.Protocol.TPraos
     ( TPraos
+    )
+import "cardano-protocol-tpraos" Cardano.Protocol.TPraos.OCert
+    ( KESPeriod (..)
+    , OCert (..)
+    , OCertSignable (OCertSignable)
     )
 
 import Cardano.Crypto.DSIGN qualified as Crypto
@@ -259,7 +262,7 @@ seedKeyVRF =
         $ B8.pack
         $ flip replicate 'a'
         $ fromIntegral
-        $ sizeSignKeyVRF (Proxy :: Proxy PraosVRF)
+        $ fixedSize (Proxy :: Proxy (SignKeyVRF PraosVRF))
 
 -- | Generate a dummy VRF signing key.
 mkKeyVRF' :: VRFAlgorithm a => SignKeyVRF a
