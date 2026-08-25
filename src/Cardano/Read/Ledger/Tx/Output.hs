@@ -18,6 +18,7 @@ module Cardano.Read.Ledger.Tx.Output
       -- * Era upgrades
     , upgradeToOutputBabbage
     , upgradeToOutputConway
+    , upgradeToOutputDijkstra
 
       -- * Serialization
     , deserializeOutput
@@ -226,6 +227,47 @@ upgradeToOutputConway = case theEra :: Era era of
     Babbage -> onOutput upgradeTxOut
     Conway -> id
     Dijkstra -> error "upgradeToOutputConway: cannot downgrade from Dijkstra"
+
+{-# INLINEABLE upgradeToOutputDijkstra #-}
+
+{- | Upgrade an 'Output' to the 'Dijkstra' era.
+
+Hardfork: Update this function to the next era.
+-}
+upgradeToOutputDijkstra
+    :: forall era. IsEra era => Output era -> Output Dijkstra
+upgradeToOutputDijkstra = case theEra :: Era era of
+    Byron -> onOutput
+        $ \(BY.TxOut addr lovelace) ->
+            mkBasicTxOut
+                (AddrBootstrap (BootstrapAddress addr))
+                (maryValueFromByronValue lovelace)
+    Shelley ->
+        onOutput
+            $ upgradeTxOut
+                . upgradeTxOut
+                . upgradeTxOut
+                . upgradeTxOut
+                . upgradeTxOut
+                . upgradeTxOut
+    Allegra ->
+        onOutput
+            $ upgradeTxOut
+                . upgradeTxOut
+                . upgradeTxOut
+                . upgradeTxOut
+                . upgradeTxOut
+    Mary ->
+        onOutput
+            $ upgradeTxOut . upgradeTxOut . upgradeTxOut . upgradeTxOut
+    Alonzo ->
+        onOutput
+            $ upgradeTxOut . upgradeTxOut . upgradeTxOut
+    Babbage ->
+        onOutput
+            $ upgradeTxOut . upgradeTxOut
+    Conway -> onOutput upgradeTxOut
+    Dijkstra -> id
 
 -- | Helper function for type inference in era upgrade operations.
 onOutput
