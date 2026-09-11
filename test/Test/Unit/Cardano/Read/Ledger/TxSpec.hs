@@ -31,7 +31,14 @@ import Cardano.Read.Ledger.Eras
     , Shelley
     )
 import Cardano.Read.Ledger.Tx.CBOR
-    ( deserializeTx
+    ( TxWithOutputBytes (..)
+    , deserializeConwayTxWithOutputBytes
+    , deserializeTx
+    , serializeTx
+    )
+import Cardano.Read.Ledger.Tx.Output
+    ( deserializeOutput
+    , serializeOutput
     )
 import Cardano.Read.Ledger.Tx.Tx
     ( Tx
@@ -43,11 +50,19 @@ import Data.ByteArray.Encoding
 import Data.ByteString
     ( ByteString
     )
+import Data.ByteString qualified as BS
 import Data.ByteString.Lazy
     ( fromStrict
     )
 import Data.ByteString.Lazy qualified as BL
-import Test.Hspec (Spec, describe, it)
+import Test.Hspec
+    ( Spec
+    , describe
+    , expectationFailure
+    , it
+    , shouldBe
+    , shouldSatisfy
+    )
 
 {-----------------------------------------------------------------------------
     Test
@@ -294,3 +309,50 @@ spec = do
             $ seq conwayTx True
         it "parses dijkstraTx"
             $ seq dijkstraTx True
+    describe "deserializeConwayTxWithOutputBytes" $ do
+        it "returns ledger-validated ordinary output spans" $ do
+            let bytes = serializeTx conwayTx
+            TxWithOutputBytes{transaction, outputsWithBytes} <-
+                expectRight $ deserializeConwayTxWithOutputBytes bytes
+            transaction `shouldBe` conwayTx
+            length outputsWithBytes `shouldBe` 2
+            outputsWithBytes
+                `shouldSatisfy` all
+                    ( \(output, sourceBytes) ->
+                        either (const False) (== output) $ deserializeOutput sourceBytes
+                    )
+            outputsWithBytes
+                `shouldSatisfy` any (\(output, sourceBytes) -> serializeOutput output /= sourceBytes)
+
+        it "preserves a noncanonical output span" $ do
+            let canonicalTx = serializeTx conwayTx
+            TxWithOutputBytes{outputsWithBytes} <-
+                expectRight $ deserializeConwayTxWithOutputBytes canonicalTx
+            (canonicalOutput, firstBytes) <- case outputsWithBytes of
+                value : _ -> pure value
+                [] ->
+                    expectationFailure "expected a Conway output" >> fail "missing output"
+            let first = BL.toStrict firstBytes
+            first `shouldSatisfy` BS.isPrefixOf (BS.pack [0xa2, 0x00])
+            let noncanonical = BS.take 1 first <> BS.pack [0x18, 0x00] <> BS.drop 2 first
+            let (prefix, suffix) = BS.breakSubstring first $ BL.toStrict canonicalTx
+            suffix `shouldSatisfy` (not . BS.null)
+            let modified =
+                    BL.fromStrict
+                        $ prefix <> noncanonical <> BS.drop (BS.length first) suffix
+            TxWithOutputBytes{outputsWithBytes = modifiedOutputs} <-
+                expectRight $ deserializeConwayTxWithOutputBytes modified
+            (output, source) <- case modifiedOutputs of
+                value : _ -> pure value
+                [] ->
+                    expectationFailure "expected a modified Conway output"
+                        >> fail "missing output"
+            output `shouldBe` canonicalOutput
+            BL.toStrict source `shouldBe` noncanonical
+            serializeOutput output `shouldSatisfy` (/= source)
+
+expectRight :: Show error => Either error value -> IO value
+expectRight =
+    either
+        (\err -> expectationFailure (show err) >> fail "unexpected Left")
+        pure

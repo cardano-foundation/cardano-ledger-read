@@ -10,6 +10,9 @@ module Cardano.Read.Ledger.Tx.CBOR
 
       -- * Deserialization
     , deserializeTx
+    , TxWithOutputBytes (..)
+    , TxOutputBytesError (..)
+    , deserializeConwayTxWithOutputBytes
     )
 where
 
@@ -28,14 +31,47 @@ import Cardano.Ledger.Binary
     )
 import Cardano.Ledger.Binary.Encoding qualified as Ledger
 import Cardano.Read.Ledger.Eras
-    ( Era (..)
+    ( Conway
+    , Era (..)
     , IsEra (..)
+    )
+import Cardano.Read.Ledger.Tx.Output
+    ( Output (..)
+    , deserializeOutput
+    )
+import Cardano.Read.Ledger.Tx.Outputs
+    ( Outputs (..)
+    , getEraOutputs
     )
 import Cardano.Read.Ledger.Tx.Tx
     ( Tx (..)
     , TxT
     )
+import Codec.CBOR.Decoding
+    ( ByteOffset
+    , Decoder
+    , decodeBreakOr
+    , decodeInteger
+    , decodeListLenOrIndef
+    , decodeMapLenOrIndef
+    , peekByteOffset
+    )
+import Codec.CBOR.Read
+    ( deserialiseFromBytes
+    )
+import Codec.CBOR.Term
+    ( decodeTerm
+    )
+import Control.Monad
+    ( replicateM
+    , replicateM_
+    , unless
+    , when
+    )
 import Data.ByteString.Lazy qualified as BL
+import Data.Foldable
+    ( toList
+    )
 
 {-# INLINEABLE serializeTx #-}
 
@@ -76,6 +112,105 @@ deserializeTx = case era of
     era = theEra :: Era era
     decodeTx protVer label =
         fmap Tx . decodeFullAnnotator protVer label decCBOR
+
+data TxWithOutputBytes = TxWithOutputBytes
+    { transaction :: !(Tx Conway)
+    , outputsWithBytes :: ![(Output Conway, BL.ByteString)]
+    }
+    deriving (Eq, Show)
+
+data TxOutputBytesError
+    = InvalidConwayTransaction
+    | InvalidTransactionStructure
+    | OutputSpanMismatch
+    deriving (Eq, Show)
+
+{- | Decode a complete Conway transaction and retain each ordinary output's
+exact source bytes. The structural pass is accepted only when every captured
+span ledger-decodes to the corresponding output from the validated tx.
+-}
+deserializeConwayTxWithOutputBytes
+    :: BL.ByteString -> Either TxOutputBytesError TxWithOutputBytes
+deserializeConwayTxWithOutputBytes bytes = do
+    transaction <-
+        either (const $ Left InvalidConwayTransaction) Right
+            $ deserializeTx bytes
+    spans <- case deserialiseFromBytes decodeTransactionOutputSpans bytes of
+        Left _ -> Left InvalidTransactionStructure
+        Right (remaining, values)
+            | BL.null remaining -> Right values
+            | otherwise -> Left InvalidTransactionStructure
+    let sourceBytes = slice bytes <$> spans
+    decodedOutputs <-
+        mapM
+            ( either (const $ Left InvalidTransactionStructure) Right
+                . deserializeOutput
+            )
+            sourceBytes
+    let Outputs ledgerOutputs = getEraOutputs transaction
+    unless (decodedOutputs == (Output <$> toList ledgerOutputs))
+        $ Left OutputSpanMismatch
+    pure
+        TxWithOutputBytes
+            { transaction
+            , outputsWithBytes = zip decodedOutputs sourceBytes
+            }
+  where
+    slice source (start, end) =
+        BL.take (fromIntegral $ end - start)
+            $ BL.drop (fromIntegral start) source
+
+decodeTransactionOutputSpans :: Decoder s [(ByteOffset, ByteOffset)]
+decodeTransactionOutputSpans = do
+    outerLength <- decodeListLenOrIndef
+    spans <- decodeBody
+    finishCollection outerLength 1
+    pure spans
+  where
+    decodeBody = do
+        bodyLength <- decodeMapLenOrIndef
+        values <- decodeMapEntries bodyLength Nothing
+        maybe (fail "transaction body has no outputs") pure values
+
+    decodeMapEntries (Just count) seen = go count seen
+      where
+        go 0 values = pure values
+        go remaining values = decodeEntry values >>= go (remaining - 1)
+    decodeMapEntries Nothing seen = do
+        done <- decodeBreakOr
+        if done
+            then pure seen
+            else decodeEntry seen >>= decodeMapEntries Nothing
+
+    decodeEntry seen = do
+        key <- decodeInteger
+        if key == 1
+            then do
+                when (maybe False (const True) seen) $ fail "duplicate outputs field"
+                Just <$> decodeOutputArray
+            else decodeTerm >> pure seen
+
+    decodeOutputArray = do
+        outputLength <- decodeListLenOrIndef
+        decodeCollection outputLength $ do
+            start <- peekByteOffset
+            _ <- decodeTerm
+            end <- peekByteOffset
+            pure (start, end)
+
+    decodeCollection (Just count) action = replicateM count action
+    decodeCollection Nothing action = go
+      where
+        go = do
+            done <- decodeBreakOr
+            if done then pure [] else (:) <$> action <*> go
+
+    finishCollection (Just count) consumed = do
+        when (count < consumed) $ fail "transaction array is too short"
+        replicateM_ (count - consumed) decodeTerm
+    finishCollection Nothing _ = do
+        done <- decodeBreakOr
+        unless done $ decodeTerm >> finishCollection Nothing 0
 
 {-# INLINE versionForEra #-}
 
