@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 {- |
 Copyright: © 2020-2022 IOHK, 2024 Cardano Foundation
 License: Apache-2.0
@@ -13,6 +15,7 @@ module Cardano.Read.Ledger.Tx.CBOR
     , TxWithOutputBytes (..)
     , TxOutputBytesError (..)
     , deserializeConwayTxWithOutputBytes
+    , deserializeDijkstraTxWithOutputBytes
     )
 where
 
@@ -32,6 +35,7 @@ import Cardano.Ledger.Binary
 import Cardano.Ledger.Binary.Encoding qualified as Ledger
 import Cardano.Read.Ledger.Eras
     ( Conway
+    , Dijkstra
     , Era (..)
     , IsEra (..)
     )
@@ -71,6 +75,9 @@ import Control.Monad
 import Data.ByteString.Lazy qualified as BL
 import Data.Foldable
     ( toList
+    )
+import Data.Maybe
+    ( isJust
     )
 
 {-# INLINEABLE serializeTx #-}
@@ -113,14 +120,19 @@ deserializeTx = case era of
     decodeTx protVer label =
         fmap Tx . decodeFullAnnotator protVer label decCBOR
 
-data TxWithOutputBytes = TxWithOutputBytes
-    { transaction :: !(Tx Conway)
-    , outputsWithBytes :: ![(Output Conway, BL.ByteString)]
+data TxWithOutputBytes era = TxWithOutputBytes
+    { transaction :: !(Tx era)
+    , outputsWithBytes :: ![(Output era, BL.ByteString)]
     }
-    deriving (Eq, Show)
+
+deriving instance
+    (Eq (Tx era), Eq (Output era)) => Eq (TxWithOutputBytes era)
+deriving instance
+    (Show (Tx era), Show (Output era)) => Show (TxWithOutputBytes era)
 
 data TxOutputBytesError
     = InvalidConwayTransaction
+    | InvalidDijkstraTransaction
     | InvalidTransactionStructure
     | OutputSpanMismatch
     deriving (Eq, Show)
@@ -130,10 +142,34 @@ exact source bytes. The structural pass is accepted only when every captured
 span ledger-decodes to the corresponding output from the validated tx.
 -}
 deserializeConwayTxWithOutputBytes
-    :: BL.ByteString -> Either TxOutputBytesError TxWithOutputBytes
-deserializeConwayTxWithOutputBytes bytes = do
+    :: BL.ByteString -> Either TxOutputBytesError (TxWithOutputBytes Conway)
+deserializeConwayTxWithOutputBytes =
+    deserializeTxWithOutputBytes InvalidConwayTransaction $ \tx ->
+        let Outputs ledgerOutputs = getEraOutputs tx
+        in  Output <$> toList ledgerOutputs
+
+{- | Decode a complete Dijkstra transaction and retain each ordinary output's
+exact source bytes. The structural pass is accepted only when every captured
+span ledger-decodes to the corresponding output from the validated tx.
+-}
+deserializeDijkstraTxWithOutputBytes
+    :: BL.ByteString
+    -> Either TxOutputBytesError (TxWithOutputBytes Dijkstra)
+deserializeDijkstraTxWithOutputBytes =
+    deserializeTxWithOutputBytes InvalidDijkstraTransaction $ \tx ->
+        let Outputs ledgerOutputs = getEraOutputs tx
+        in  Output <$> toList ledgerOutputs
+
+deserializeTxWithOutputBytes
+    :: forall era
+     . (IsEra era, Eq (Output era))
+    => TxOutputBytesError
+    -> (Tx era -> [Output era])
+    -> BL.ByteString
+    -> Either TxOutputBytesError (TxWithOutputBytes era)
+deserializeTxWithOutputBytes invalidTransaction getOutputs bytes = do
     transaction <-
-        either (const $ Left InvalidConwayTransaction) Right
+        either (const $ Left invalidTransaction) Right
             $ deserializeTx bytes
     spans <- case deserialiseFromBytes decodeTransactionOutputSpans bytes of
         Left _ -> Left InvalidTransactionStructure
@@ -147,8 +183,7 @@ deserializeConwayTxWithOutputBytes bytes = do
                 . deserializeOutput
             )
             sourceBytes
-    let Outputs ledgerOutputs = getEraOutputs transaction
-    unless (decodedOutputs == (Output <$> toList ledgerOutputs))
+    unless (decodedOutputs == getOutputs transaction)
         $ Left OutputSpanMismatch
     pure
         TxWithOutputBytes
@@ -186,7 +221,7 @@ decodeTransactionOutputSpans = do
         key <- decodeInteger
         if key == 1
             then do
-                when (maybe False (const True) seen) $ fail "duplicate outputs field"
+                when (isJust seen) $ fail "duplicate outputs field"
                 Just <$> decodeOutputArray
             else decodeTerm >> pure seen
 

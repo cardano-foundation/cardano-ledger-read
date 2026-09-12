@@ -31,8 +31,10 @@ import Cardano.Read.Ledger.Eras
     , Shelley
     )
 import Cardano.Read.Ledger.Tx.CBOR
-    ( TxWithOutputBytes (..)
+    ( TxOutputBytesError (..)
+    , TxWithOutputBytes (..)
     , deserializeConwayTxWithOutputBytes
+    , deserializeDijkstraTxWithOutputBytes
     , deserializeTx
     , serializeTx
     )
@@ -267,14 +269,13 @@ dijkstraTx =
         \0101010101010101010101010101010101010101010101010101010101010101\
         \01010101010101011A001E8480A2005839010202020202020202020202020202\
         \0202020202020202020202020202020202020202020202020202020202020202\
-        \02020202020202020202011A0078175C021A0001FAA403191E46048183098200\
-        \581C0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A0A8200\
-        \581C0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0DA102\
-        \8184582001000000000000000000000000000000000000000000000000000000\
-        \0000000058407154DB81463825F150BB3B9B0824CAF1513716F73498AFE61D91\
-        \7A5621912A2B3DF252BEA14683A9EE56710D483A53A5AA35247E0D2B80E6300F\
-        \7BDEC763A2045820000000000000000000000000000000000000000000000000\
-        \000000000000000044A1024100F5F6"
+        \02020202020202020202011A0078175C021A0001FAA403191E460E81581C0B0B\
+        \0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0BA10281845820\
+        \0100000000000000000000000000000000000000000000000000000000000000\
+        \58407154DB81463825F150BB3B9B0824CAF1513716F73498AFE61D917A562191\
+        \2A2B3DF252BEA14683A9EE56710D483A53A5AA35247E0D2B80E6300F7BDEC763\
+        \A204582000000000000000000000000000000000000000000000000000000000\
+        \0000000044A1024100F5F6"
 
 -- | Parse a hex-encoded transaction into a particular era.
 unsafeParseEraTxFromHex
@@ -350,6 +351,20 @@ spec = do
             output `shouldBe` canonicalOutput
             BL.toStrict source `shouldBe` noncanonical
             serializeOutput output `shouldSatisfy` (/= source)
+    describe "deserializeDijkstraTxWithOutputBytes" $ do
+        it "validates and returns Dijkstra output spans" $ do
+            let bytes = serializeTx dijkstraTx
+            TxWithOutputBytes{transaction, outputsWithBytes} <-
+                expectRight $ deserializeDijkstraTxWithOutputBytes bytes
+            transaction `shouldBe` dijkstraTx
+            length outputsWithBytes `shouldBe` 2
+            outputsWithBytes
+                `shouldSatisfy` all
+                    ( \(output, sourceBytes) ->
+                        either (const False) (== output) $ deserializeOutput sourceBytes
+                    )
+            deserializeConwayTxWithOutputBytes bytes
+                `shouldBe` Left InvalidConwayTransaction
 
 expectRight :: Show error => Either error value -> IO value
 expectRight =
