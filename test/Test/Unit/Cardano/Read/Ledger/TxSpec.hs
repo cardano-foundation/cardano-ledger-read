@@ -33,14 +33,17 @@ import Cardano.Read.Ledger.Eras
 import Cardano.Read.Ledger.Tx.CBOR
     ( TxOutputBytesError (..)
     , TxWithOutputBytes (..)
-    , deserializeConwayTxWithOutputBytes
-    , deserializeDijkstraTxWithOutputBytes
     , deserializeTx
+    , deserializeTxWithOutputBytes
     , serializeTx
     )
 import Cardano.Read.Ledger.Tx.Output
-    ( deserializeOutput
+    ( Output
+    , deserializeOutput
     , serializeOutput
+    )
+import Cardano.Read.Ledger.Tx.Outputs
+    ( getEraOutputsList
     )
 import Cardano.Read.Ledger.Tx.Tx
     ( Tx
@@ -290,6 +293,7 @@ unsafeReadBase16 = either reportError fromStrict . convertFromBase Base16
     reportError = error "unsafeReadBase16: input not in Base16"
 
 spec :: Spec
+spec :: Spec
 spec = do
     describe "unsafeParseEraTxFromHex" $ do
         it "parses byronTx"
@@ -310,39 +314,76 @@ spec = do
             $ seq conwayTx True
         it "parses dijkstraTx"
             $ seq dijkstraTx True
-    describe "deserializeConwayTxWithOutputBytes" $ do
-        it "returns ledger-validated ordinary output spans" $ do
-            let bytes = serializeTx conwayTx
-            TxWithOutputBytes{transaction, outputsWithBytes} <-
-                expectRight $ deserializeConwayTxWithOutputBytes bytes
-            transaction `shouldBe` conwayTx
-            length outputsWithBytes `shouldBe` 2
+    describe "deserializeTxWithOutputBytes" $ do
+        it "retains the output spans of a Shelley transaction"
+            $ retainsOutputBytes shelleyTx
+        it "retains the output spans of an Allegra transaction"
+            $ retainsOutputBytes allegraTx
+        it "retains the output spans of a Mary transaction"
+            $ retainsOutputBytes maryTx
+        it "retains the output spans of a Mary transaction with a long output"
+            $ retainsOutputBytes maryTxLongOutput
+        it "retains the output spans of an Alonzo transaction"
+            $ retainsOutputBytes alonzoTx
+        it "retains the output spans of a Babbage transaction"
+            $ retainsOutputBytes babbageTx
+        it "retains the output spans of a Conway transaction"
+            $ retainsOutputBytes conwayTx
+        it "retains the output spans of a Dijkstra transaction"
+            $ retainsOutputBytes dijkstraTx
+
+        it "rejects Byron, which has no outputs field to locate" $ do
+            let result =
+                    deserializeTxWithOutputBytes (serializeTx byronTx)
+                        :: Either
+                            TxOutputBytesError
+                            (TxWithOutputBytes Byron)
+            result `shouldBe` Left UnsupportedEra
+
+        it "rejects a transaction the era's ledger decoder does not accept"
+            $ do
+                let result =
+                        deserializeTxWithOutputBytes (serializeTx dijkstraTx)
+                            :: Either
+                                TxOutputBytesError
+                                (TxWithOutputBytes Conway)
+                result `shouldBe` Left InvalidTransaction
+
+        it "returns bytes that a re-serialization does not reproduce" $ do
+            TxWithOutputBytes{outputsWithBytes} <-
+                expectRight
+                    $ deserializeTxWithOutputBytes (serializeTx conwayTx)
+                        `asTypeOfEra` conwayTx
             outputsWithBytes
-                `shouldSatisfy` all
+                `shouldSatisfy` any
                     ( \(output, sourceBytes) ->
-                        either (const False) (== output) $ deserializeOutput sourceBytes
+                        serializeOutput output /= sourceBytes
                     )
-            outputsWithBytes
-                `shouldSatisfy` any (\(output, sourceBytes) -> serializeOutput output /= sourceBytes)
 
         it "preserves a noncanonical output span" $ do
             let canonicalTx = serializeTx conwayTx
             TxWithOutputBytes{outputsWithBytes} <-
-                expectRight $ deserializeConwayTxWithOutputBytes canonicalTx
+                expectRight
+                    $ deserializeTxWithOutputBytes canonicalTx
+                        `asTypeOfEra` conwayTx
             (canonicalOutput, firstBytes) <- case outputsWithBytes of
                 value : _ -> pure value
                 [] ->
-                    expectationFailure "expected a Conway output" >> fail "missing output"
+                    expectationFailure "expected a Conway output"
+                        >> fail "missing output"
             let first = BL.toStrict firstBytes
             first `shouldSatisfy` BS.isPrefixOf (BS.pack [0xa2, 0x00])
-            let noncanonical = BS.take 1 first <> BS.pack [0x18, 0x00] <> BS.drop 2 first
+            let noncanonical =
+                    BS.take 1 first <> BS.pack [0x18, 0x00] <> BS.drop 2 first
             let (prefix, suffix) = BS.breakSubstring first $ BL.toStrict canonicalTx
             suffix `shouldSatisfy` (not . BS.null)
             let modified =
                     BL.fromStrict
                         $ prefix <> noncanonical <> BS.drop (BS.length first) suffix
             TxWithOutputBytes{outputsWithBytes = modifiedOutputs} <-
-                expectRight $ deserializeConwayTxWithOutputBytes modified
+                expectRight
+                    $ deserializeTxWithOutputBytes modified
+                        `asTypeOfEra` conwayTx
             (output, source) <- case modifiedOutputs of
                 value : _ -> pure value
                 [] ->
@@ -351,20 +392,40 @@ spec = do
             output `shouldBe` canonicalOutput
             BL.toStrict source `shouldBe` noncanonical
             serializeOutput output `shouldSatisfy` (/= source)
-    describe "deserializeDijkstraTxWithOutputBytes" $ do
-        it "validates and returns Dijkstra output spans" $ do
-            let bytes = serializeTx dijkstraTx
-            TxWithOutputBytes{transaction, outputsWithBytes} <-
-                expectRight $ deserializeDijkstraTxWithOutputBytes bytes
-            transaction `shouldBe` dijkstraTx
-            length outputsWithBytes `shouldBe` 2
-            outputsWithBytes
-                `shouldSatisfy` all
-                    ( \(output, sourceBytes) ->
-                        either (const False) (== output) $ deserializeOutput sourceBytes
-                    )
-            deserializeConwayTxWithOutputBytes bytes
-                `shouldBe` Left InvalidConwayTransaction
+
+{- | Every ordinary output of the transaction is returned, in source order,
+paired with bytes that ledger-decode back to that same output.
+-}
+retainsOutputBytes
+    :: forall era
+     . ( IsEra era
+       , Eq (Tx era)
+       , Show (Tx era)
+       , Eq (Output era)
+       , Show (Output era)
+       )
+    => Tx era
+    -> IO ()
+retainsOutputBytes tx = do
+    TxWithOutputBytes{transaction, outputsWithBytes} <-
+        expectRight $ deserializeTxWithOutputBytes (serializeTx tx)
+    transaction `shouldBe` tx
+    (fst <$> outputsWithBytes) `shouldBe` getEraOutputsList tx
+    outputsWithBytes
+        `shouldSatisfy` all
+            ( \(output, sourceBytes) ->
+                either (const False) (== output)
+                    $ deserializeOutput sourceBytes
+            )
+
+{- | Fix the era of a 'deserializeTxWithOutputBytes' result to the era of an
+example transaction, so that a call site does not need a type annotation.
+-}
+asTypeOfEra
+    :: Either TxOutputBytesError (TxWithOutputBytes era)
+    -> Tx era
+    -> Either TxOutputBytesError (TxWithOutputBytes era)
+asTypeOfEra result _ = result
 
 expectRight :: Show error => Either error value -> IO value
 expectRight =

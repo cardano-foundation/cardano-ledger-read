@@ -12,10 +12,11 @@ module Cardano.Read.Ledger.Tx.CBOR
 
       -- * Deserialization
     , deserializeTx
+
+      -- * Deserialization retaining output source bytes
     , TxWithOutputBytes (..)
     , TxOutputBytesError (..)
-    , deserializeConwayTxWithOutputBytes
-    , deserializeDijkstraTxWithOutputBytes
+    , deserializeTxWithOutputBytes
     )
 where
 
@@ -34,18 +35,15 @@ import Cardano.Ledger.Binary
     )
 import Cardano.Ledger.Binary.Encoding qualified as Ledger
 import Cardano.Read.Ledger.Eras
-    ( Conway
-    , Dijkstra
-    , Era (..)
+    ( Era (..)
     , IsEra (..)
     )
 import Cardano.Read.Ledger.Tx.Output
-    ( Output (..)
+    ( Output
     , deserializeOutput
     )
 import Cardano.Read.Ledger.Tx.Outputs
-    ( Outputs (..)
-    , getEraOutputs
+    ( getEraOutputsList
     )
 import Cardano.Read.Ledger.Tx.Tx
     ( Tx (..)
@@ -73,9 +71,6 @@ import Control.Monad
     , when
     )
 import Data.ByteString.Lazy qualified as BL
-import Data.Foldable
-    ( toList
-    )
 import Data.Maybe
     ( isJust
     )
@@ -120,6 +115,18 @@ deserializeTx = case era of
     decodeTx protVer label =
         fmap Tx . decodeFullAnnotator protVer label decCBOR
 
+{-----------------------------------------------------------------------------
+    Deserialization retaining output source bytes
+------------------------------------------------------------------------------}
+
+{- | A ledger-validated transaction together with the exact source bytes of
+each of its ordinary outputs.
+
+Re-serializing a decoded output does not in general reproduce the bytes it
+was decoded from: several valid CBOR encodings denote the same value. A
+consumer that must present the original representation — rather than a
+semantically equal one — needs the source bytes themselves.
+-}
 data TxWithOutputBytes era = TxWithOutputBytes
     { transaction :: !(Tx era)
     , outputsWithBytes :: ![(Output era, BL.ByteString)]
@@ -130,46 +137,65 @@ deriving instance
 deriving instance
     (Show (Tx era), Show (Output era)) => Show (TxWithOutputBytes era)
 
+-- | Why 'deserializeTxWithOutputBytes' did not return output bytes.
 data TxOutputBytesError
-    = InvalidConwayTransaction
-    | InvalidDijkstraTransaction
-    | InvalidTransactionStructure
-    | OutputSpanMismatch
+    = -- | The era does not represent a transaction as a body keyed by
+      -- field number, so ordinary outputs have no span to capture.
+      -- Byron is the only such era.
+      UnsupportedEra
+    | -- | The ledger decoder for the era rejected the transaction.
+      InvalidTransaction
+    | -- | Source-span extraction failed.
+      InvalidTransactionStructure
+    | -- | The captured outputs differ from the ledger-decoded outputs.
+      OutputSpanMismatch
     deriving (Eq, Show)
 
-{- | Decode a complete Conway transaction and retain each ordinary output's
-exact source bytes. The structural pass is accepted only when every captured
-span ledger-decodes to the corresponding output from the validated tx.
--}
-deserializeConwayTxWithOutputBytes
-    :: BL.ByteString -> Either TxOutputBytesError (TxWithOutputBytes Conway)
-deserializeConwayTxWithOutputBytes =
-    deserializeTxWithOutputBytes InvalidConwayTransaction $ \tx ->
-        let Outputs ledgerOutputs = getEraOutputs tx
-        in  Output <$> toList ledgerOutputs
+{-# INLINEABLE deserializeTxWithOutputBytes #-}
 
-{- | Decode a complete Dijkstra transaction and retain each ordinary output's
-exact source bytes. The structural pass is accepted only when every captured
-span ledger-decodes to the corresponding output from the validated tx.
--}
-deserializeDijkstraTxWithOutputBytes
-    :: BL.ByteString
-    -> Either TxOutputBytesError (TxWithOutputBytes Dijkstra)
-deserializeDijkstraTxWithOutputBytes =
-    deserializeTxWithOutputBytes InvalidDijkstraTransaction $ \tx ->
-        let Outputs ledgerOutputs = getEraOutputs tx
-        in  Output <$> toList ledgerOutputs
+{- | Decode a complete transaction in any era and retain each ordinary
+output's exact source bytes.
 
+The structural pass is accepted only when every captured span
+ledger-decodes to the corresponding output of the validated transaction,
+so the retained bytes cannot disagree with the ledger's own view of the
+transaction. The ledger decoder remains the source of semantic validation;
+the structural pass cannot make an invalid transaction valid.
+
+Byron returns 'UnsupportedEra': a Byron transaction is a positional array
+rather than a body keyed by field number, so there is no outputs field to
+locate.
+
+Hardfork: Update this function to the next era.
+-}
 deserializeTxWithOutputBytes
     :: forall era
-     . (IsEra era, Eq (Output era))
-    => TxOutputBytesError
-    -> (Tx era -> [Output era])
-    -> BL.ByteString
+     . IsEra era
+    => BL.ByteString
     -> Either TxOutputBytesError (TxWithOutputBytes era)
-deserializeTxWithOutputBytes invalidTransaction getOutputs bytes = do
+deserializeTxWithOutputBytes = case theEra :: Era era of
+    Byron -> const $ Left UnsupportedEra
+    Shelley -> withOutputBytes
+    Allegra -> withOutputBytes
+    Mary -> withOutputBytes
+    Alonzo -> withOutputBytes
+    Babbage -> withOutputBytes
+    Conway -> withOutputBytes
+    Dijkstra -> withOutputBytes
+
+{- | The era-independent body of 'deserializeTxWithOutputBytes'.
+
+The 'Eq' constraint is discharged by the era case in
+'deserializeTxWithOutputBytes' and so does not reach the public signature.
+-}
+withOutputBytes
+    :: forall era
+     . (IsEra era, Eq (Output era))
+    => BL.ByteString
+    -> Either TxOutputBytesError (TxWithOutputBytes era)
+withOutputBytes bytes = do
     transaction <-
-        either (const $ Left invalidTransaction) Right
+        either (const $ Left InvalidTransaction) Right
             $ deserializeTx bytes
     spans <- case deserialiseFromBytes decodeTransactionOutputSpans bytes of
         Left _ -> Left InvalidTransactionStructure
@@ -183,7 +209,7 @@ deserializeTxWithOutputBytes invalidTransaction getOutputs bytes = do
                 . deserializeOutput
             )
             sourceBytes
-    unless (decodedOutputs == getOutputs transaction)
+    unless (decodedOutputs == getEraOutputsList transaction)
         $ Left OutputSpanMismatch
     pure
         TxWithOutputBytes
