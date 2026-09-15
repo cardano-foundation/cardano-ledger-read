@@ -19,6 +19,9 @@ module Test.Unit.Cardano.Read.Ledger.TxSpec
 
 import Prelude
 
+import Cardano.Read.Ledger.Eras.EraValue
+    ( knownEras
+    )
 import Cardano.Read.Ledger.Eras
     ( Allegra
     , Alonzo
@@ -315,6 +318,13 @@ spec = do
         it "parses dijkstraTx"
             $ seq dijkstraTx True
     describe "deserializeTxWithOutputBytes" $ do
+        -- Adding an era adds a case arm to the function under test. Without
+        -- this, the new arm would simply go untested: an era ladder can stop
+        -- one rung short and nothing complains. This fails until the era is
+        -- named in erasCoveredHere below.
+        it "has a case here for every known era"
+            $ length erasCoveredHere `shouldBe` length knownEras
+
         it "retains the output spans of a Shelley transaction"
             $ retainsOutputBytes shelleyTx
         it "retains the output spans of an Allegra transaction"
@@ -393,6 +403,23 @@ spec = do
             BL.toStrict source `shouldBe` noncanonical
             serializeOutput output `shouldSatisfy` (/= source)
 
+{- | The eras this module exercises for 'deserializeTxWithOutputBytes': the
+seven that support the capability, plus Byron, which is asserted to reject.
+
+Hardfork: add the new era here, and give it a case above.
+-}
+erasCoveredHere :: [String]
+erasCoveredHere =
+    [ "Byron"
+    , "Shelley"
+    , "Allegra"
+    , "Mary"
+    , "Alonzo"
+    , "Babbage"
+    , "Conway"
+    , "Dijkstra"
+    ]
+
 {- | Every ordinary output of the transaction is returned, in source order,
 paired with bytes that ledger-decode back to that same output.
 -}
@@ -407,8 +434,9 @@ retainsOutputBytes
     => Tx era
     -> IO ()
 retainsOutputBytes tx = do
+    let bytes = serializeTx tx
     TxWithOutputBytes{transaction, outputsWithBytes} <-
-        expectRight $ deserializeTxWithOutputBytes (serializeTx tx)
+        expectRight $ deserializeTxWithOutputBytes bytes
     transaction `shouldBe` tx
     (fst <$> outputsWithBytes) `shouldBe` getEraOutputsList tx
     outputsWithBytes
@@ -417,6 +445,12 @@ retainsOutputBytes tx = do
                 either (const False) (== output)
                     $ deserializeOutput sourceBytes
             )
+    -- The spans are the transaction's own bytes, not a re-encoding: the
+    -- outputs are adjacent inside the outputs array, so their
+    -- concatenation occurs verbatim in the source.
+    BL.toStrict bytes
+        `shouldSatisfy` BS.isInfixOf
+            (BL.toStrict $ mconcat $ snd <$> outputsWithBytes)
 
 {- | Fix the era of a 'deserializeTxWithOutputBytes' result to the era of an
 example transaction, so that a call site does not need a type annotation.
