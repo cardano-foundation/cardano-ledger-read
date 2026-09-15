@@ -63,6 +63,9 @@ import Data.ByteString.Lazy
     ( fromStrict
     )
 import Data.ByteString.Lazy qualified as BL
+import Data.Word
+    ( Word8
+    )
 import Test.Hspec
     ( Spec
     , describe
@@ -350,6 +353,29 @@ spec = do
                             (TxWithOutputBytes Byron)
             result `shouldBe` Left UnsupportedEra
 
+        -- The Byron case above is a decision; this is the fact behind it.
+        -- A Byron transaction is a positional array whose first element is
+        -- itself an array, so there is no field number under which outputs
+        -- could be found. This fails if that encoding ever changes, rather
+        -- than agreeing with the code by construction.
+        it "encodes a Byron body positionally, with no field numbers" $ do
+            let byronBytes = BL.toStrict $ serializeTx byronTx
+            BS.index byronBytes 0 `shouldSatisfy` isArrayHeader
+            BS.index byronBytes 1 `shouldSatisfy` isArrayHeader
+            BS.index byronBytes 1 `shouldSatisfy` (not . isMapHeader)
+
+        -- Every other era keys its body by field number, which is what
+        -- makes the outputs field locatable at all.
+        it "encodes a keyed body from Shelley on" $ do
+            let keyedBody tx = BS.index (BL.toStrict tx) 1
+            keyedBody (serializeTx shelleyTx) `shouldSatisfy` isMapHeader
+            keyedBody (serializeTx allegraTx) `shouldSatisfy` isMapHeader
+            keyedBody (serializeTx maryTx) `shouldSatisfy` isMapHeader
+            keyedBody (serializeTx alonzoTx) `shouldSatisfy` isMapHeader
+            keyedBody (serializeTx babbageTx) `shouldSatisfy` isMapHeader
+            keyedBody (serializeTx conwayTx) `shouldSatisfy` isMapHeader
+            keyedBody (serializeTx dijkstraTx) `shouldSatisfy` isMapHeader
+
         it "rejects a transaction the era's ledger decoder does not accept"
             $ do
                 let result =
@@ -403,11 +429,131 @@ spec = do
             BL.toStrict source `shouldBe` noncanonical
             serializeOutput output `shouldSatisfy` (/= source)
 
+        it "preserves a noncanonical container header in Shelley"
+            $ preservesNoncanonicalHeader shelleyTx
+        it "preserves a noncanonical container header in Allegra"
+            $ preservesNoncanonicalHeader allegraTx
+        it "preserves a noncanonical container header in Mary"
+            $ preservesNoncanonicalHeader maryTx
+        it "preserves a noncanonical container header in Alonzo"
+            $ preservesNoncanonicalHeader alonzoTx
+        it "preserves a noncanonical container header in Babbage"
+            $ preservesNoncanonicalHeader babbageTx
+        it "preserves a noncanonical container header in Conway"
+            $ preservesNoncanonicalHeader conwayTx
+        it "preserves a noncanonical container header in Dijkstra"
+            $ preservesNoncanonicalHeader dijkstraTx
+
+        -- The structural pass has a "duplicate outputs field" guard, but it
+        -- cannot be reached through this entry point: `deserializeTx` runs
+        -- first and the ledger rejects the duplicate, so the error is
+        -- `InvalidTransaction` and not `InvalidTransactionStructure`. This
+        -- pins that ordering — it changes meaning if the passes are ever
+        -- swapped.
+        it "rejects a body carrying the outputs field twice, at the ledger" $ do
+            let bytes = BL.toStrict $ serializeTx conwayTx
+            TxWithOutputBytes{outputsWithBytes} <-
+                expectRight
+                    $ deserializeTxWithOutputBytes (serializeTx conwayTx)
+                        `asTypeOfEra` conwayTx
+            -- Key 1, a two-element array, then the two outputs verbatim:
+            -- the whole outputs entry of the body map.
+            let entry =
+                    BS.pack [0x01, 0x82]
+                        <> BL.toStrict (mconcat $ snd <$> outputsWithBytes)
+                (before, rest) = BS.breakSubstring entry bytes
+            rest `shouldSatisfy` (not . BS.null)
+            -- Splice the entry in a second time and widen the body map
+            -- header by one entry to keep the CBOR well formed.
+            let bodyHeader = BS.index before 1
+                duplicated =
+                    BS.take 1 before
+                        <> BS.singleton (bodyHeader + 1)
+                        <> BS.drop 2 before
+                        <> entry
+                        <> rest
+            bodyHeader `shouldSatisfy` isMapHeader
+            (bodyHeader + 1) `shouldSatisfy` isMapHeader
+            let result =
+                    deserializeTxWithOutputBytes (BL.fromStrict duplicated)
+                        `asTypeOfEra` conwayTx
+            result `shouldBe` Left InvalidTransaction
+
 {- | The eras this module exercises for 'deserializeTxWithOutputBytes': the
 seven that support the capability, plus Byron, which is asserted to reject.
 
 Hardfork: add the new era here, and give it a case above.
 -}
+
+-- | A CBOR definite- or indefinite-length array header byte.
+isArrayHeader :: Word8 -> Bool
+isArrayHeader b = b >= 0x80 && b <= 0x9f
+
+-- | A CBOR definite- or indefinite-length map header byte.
+isMapHeader :: Word8 -> Bool
+isMapHeader b = b >= 0xa0 && b <= 0xbf
+
+{- | Rewrite a CBOR container header that carries its length in the initial
+byte into the equivalent one-byte-length form: @0x83@ becomes @0x98 0x03@,
+@0xa2@ becomes @0xb8 0x02@.
+
+The result denotes the same value and is equally valid, but is not the
+encoding a serializer would produce. It applies to both shapes an output
+takes across the eras — an array up to Alonzo, a map from Babbage on —
+which the era-specific edits below it cannot.
+-}
+widenContainerHeader :: BS.ByteString -> Maybe BS.ByteString
+widenContainerHeader out = case BS.uncons out of
+    Just (header, rest)
+        | header >= 0x80 && header <= 0x97 ->
+            Just $ BS.pack [0x98, header - 0x80] <> rest
+        | header >= 0xa0 && header <= 0xb7 ->
+            Just $ BS.pack [0xb8, header - 0xa0] <> rest
+    _ -> Nothing
+
+{- | An output whose container header is re-encoded noncanonically comes back
+byte-for-byte as it was written, and still denotes the canonical value.
+
+This is the property the capability exists for, so it is asserted at every
+era that supports it rather than at one.
+-}
+preservesNoncanonicalHeader
+    :: forall era
+     . (IsEra era, Eq (Output era), Show (Output era))
+    => Tx era
+    -> IO ()
+preservesNoncanonicalHeader tx = do
+    let canonicalTx = BL.toStrict $ serializeTx tx
+    TxWithOutputBytes{outputsWithBytes} <-
+        expectRight $ deserializeTxWithOutputBytes (serializeTx tx)
+    (canonicalOutput, firstBytes) <- case outputsWithBytes of
+        value : _ -> pure value
+        [] -> expectationFailure "expected an output" >> fail "no output"
+    let canonicalFirst = BL.toStrict firstBytes
+    noncanonical <- case widenContainerHeader canonicalFirst of
+        Just value -> pure value
+        Nothing ->
+            expectationFailure "output is not a length-in-header container"
+                >> fail "cannot perturb"
+    noncanonical `shouldSatisfy` (/= canonicalFirst)
+    let (before, rest) = BS.breakSubstring canonicalFirst canonicalTx
+    rest `shouldSatisfy` (not . BS.null)
+    let modified =
+            BL.fromStrict
+                $ before
+                    <> noncanonical
+                    <> BS.drop (BS.length canonicalFirst) rest
+    TxWithOutputBytes{outputsWithBytes = modifiedOutputs} <-
+        expectRight $ deserializeTxWithOutputBytes modified `asTypeOfEra` tx
+    (output, source) <- case modifiedOutputs of
+        value : _ -> pure value
+        [] ->
+            expectationFailure "expected a perturbed output"
+                >> fail "no output"
+    output `shouldBe` canonicalOutput
+    BL.toStrict source `shouldBe` noncanonical
+    serializeOutput output `shouldSatisfy` (/= source)
+
 erasCoveredHere :: [String]
 erasCoveredHere =
     [ "Byron"
