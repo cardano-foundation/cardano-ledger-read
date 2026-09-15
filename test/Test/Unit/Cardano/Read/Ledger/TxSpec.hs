@@ -19,9 +19,6 @@ module Test.Unit.Cardano.Read.Ledger.TxSpec
 
 import Prelude
 
-import Cardano.Read.Ledger.Eras.EraValue
-    ( knownEras
-    )
 import Cardano.Read.Ledger.Eras
     ( Allegra
     , Alonzo
@@ -32,6 +29,9 @@ import Cardano.Read.Ledger.Eras
     , IsEra
     , Mary
     , Shelley
+    )
+import Cardano.Read.Ledger.Eras.EraValue
+    ( knownEras
     )
 import Cardano.Read.Ledger.Tx.CBOR
     ( TxOutputBytesError (..)
@@ -296,7 +296,6 @@ unsafeReadBase16 = either reportError fromStrict . convertFromBase Base16
     reportError = error "unsafeReadBase16: input not in Base16"
 
 spec :: Spec
-spec :: Spec
 spec = do
     describe "unsafeParseEraTxFromHex" $ do
         it "parses byronTx"
@@ -323,7 +322,8 @@ spec = do
         -- one rung short and nothing complains. This fails until the era is
         -- named in erasCoveredHere below.
         it "has a case here for every known era"
-            $ length erasCoveredHere `shouldBe` length knownEras
+            $ length erasCoveredHere
+            `shouldBe` length knownEras
 
         it "retains the output spans of a Shelley transaction"
             $ retainsOutputBytes shelleyTx
@@ -353,10 +353,10 @@ spec = do
         it "rejects a transaction the era's ledger decoder does not accept"
             $ do
                 let result =
-                        deserializeTxWithOutputBytes (serializeTx dijkstraTx)
+                        deserializeTxWithOutputBytes (serializeTx babbageTx)
                             :: Either
                                 TxOutputBytesError
-                                (TxWithOutputBytes Conway)
+                                (TxWithOutputBytes Shelley)
                 result `shouldBe` Left InvalidTransaction
 
         it "returns bytes that a re-serialization does not reproduce" $ do

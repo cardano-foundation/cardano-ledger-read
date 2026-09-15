@@ -139,9 +139,10 @@ deriving instance
 
 -- | Why 'deserializeTxWithOutputBytes' did not return output bytes.
 data TxOutputBytesError
-    = -- | The era does not represent a transaction as a body keyed by
-      -- field number, so ordinary outputs have no span to capture.
-      -- Byron is the only such era.
+    = {- | The era does not represent a transaction as a body keyed by
+      field number, so ordinary outputs have no span to capture.
+      Byron is the only such era.
+      -}
       UnsupportedEra
     | -- | The ledger decoder for the era rejected the transaction.
       InvalidTransaction
