@@ -14,6 +14,7 @@ module Cardano.Read.Ledger.Tx.Outputs
 
       -- * Extraction
     , getEraOutputs
+    , getEraOutputsList
     )
 where
 
@@ -48,11 +49,18 @@ import Cardano.Read.Ledger.Eras
 import Cardano.Read.Ledger.Tx.Eras
     ( onTx
     )
+import Cardano.Read.Ledger.Tx.Output
+    ( Output (..)
+    , OutputType
+    )
 import Cardano.Read.Ledger.Tx.Tx
     ( Tx (..)
     )
 import Control.Lens
     ( view
+    )
+import Data.Foldable
+    ( toList
     )
 import Data.List.NonEmpty
     ( NonEmpty
@@ -102,3 +110,32 @@ getEraOutputs = case theEra :: Era era of
     Dijkstra -> outputs
   where
     outputs = onTx $ Outputs . view (bodyTxL . outputsTxBodyL)
+
+{-# INLINE getEraOutputsList #-}
+
+{- | Extract the transaction outputs from a transaction in any era,
+flattened into a list.
+
+This is 'getEraOutputs' with the era-specific container ('NonEmpty' in
+Byron, 'StrictSeq' from Shelley on) collapsed to a list, so that a caller
+which is polymorphic in the era does not have to match on the era itself
+in order to traverse the outputs.
+-}
+getEraOutputsList :: forall era. IsEra era => Tx era -> [Output era]
+getEraOutputsList = case theEra :: Era era of
+    Byron -> outputsList toList
+    Shelley -> outputsList toList
+    Allegra -> outputsList toList
+    Mary -> outputsList toList
+    Alonzo -> outputsList toList
+    Babbage -> outputsList toList
+    Conway -> outputsList toList
+    Dijkstra -> outputsList toList
+  where
+    outputsList
+        :: (OutputsType era -> [OutputType era])
+        -> Tx era
+        -> [Output era]
+    outputsList flatten tx =
+        let Outputs os = getEraOutputs tx
+        in  Output <$> flatten os
